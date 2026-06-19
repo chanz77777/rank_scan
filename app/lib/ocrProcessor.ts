@@ -3,14 +3,19 @@
  * 画像からテキストを抽出してプレイヤーIDを識別
  */
 
-// ⬇️ エラーの原因になっていた fs と path のインポートを削除 ⬇️
-// import fs from 'fs';
-// import path from 'path';
+// スコアボード上に表示されるが、プレイヤーIDではない単語のブラックリスト
+// 「YOU」は自分のプレイヤー名の横に付くラベルとして表示される
+const ID_BLOCKLIST = new Set([
+  'you',      // 自分のプレイヤー表示ラベル
+  'you_',
+  '_you',
+  'the', 'and', 'for', 'are', 'but', 'not',
+]);
 
 /**
  * R6 SiegeのスクリーンショットのテキストからプレイヤーIDを抽出
  * R6 Siegeスコアボードではプレイヤー名が表示される
- * * @param text OCRで抽出されたテキスト
+ * @param text OCRで抽出されたテキスト
  * @returns プレイヤーIDの配列
  */
 export function parsePlayerIdsFromText(text: string): string[] {
@@ -33,8 +38,12 @@ export function parsePlayerIdsFromText(text: string): string[] {
     const lineWithUnderscores = cleanedLine.replace(/\s+/g, '_');
     const cleanWord = lineWithUnderscores.replace(/[^A-Za-z0-9._\-\|]/g, '');
 
-    // Uplay IDは3〜15文字
-    if (cleanWord.length >= 3 && cleanWord.length <= 15) {
+    // ブラックリストチェック（大文字小文字を区別しない）
+    if (ID_BLOCKLIST.has(cleanWord.toLowerCase())) continue;
+
+    // Uplay IDは4〜16文字
+    // （3文字以下は "You" などの誤検出が多いため除外）
+    if (cleanWord.length >= 4 && cleanWord.length <= 16) {
       if (!seen.has(cleanWord.toLowerCase())) {
         playerIds.push(cleanWord);
         seen.add(cleanWord.toLowerCase());

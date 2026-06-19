@@ -114,11 +114,13 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   const seasonWins = currentSeasonSeg?.stats?.matchesWon?.value ?? 0;
   const seasonLosses = currentSeasonSeg?.stats?.matchesLost?.value ?? 0;
   const seasonWinPct = currentSeasonSeg?.stats?.winPercentage?.value ?? 0;
+  // kdRatio が直接提供されていればそれを使う、なければ kills/deaths で計算
+  const seasonKdRaw = currentSeasonSeg?.stats?.kdRatio?.value;
   const seasonKills = currentSeasonSeg?.stats?.kills?.value ?? 0;
   const seasonDeaths = currentSeasonSeg?.stats?.deaths?.value ?? 1;
-  const seasonKd = seasonDeaths > 0
-    ? parseFloat((seasonKills / seasonDeaths).toFixed(2))
-    : 0;
+  const seasonKd = seasonKdRaw != null
+    ? parseFloat(seasonKdRaw.toFixed(2))
+    : (seasonDeaths > 0 ? parseFloat((seasonKills / seasonDeaths).toFixed(2)) : 0);
 
   // ランク情報を探す（seasonSegのstats.rankなど）
   const rankStat = currentSeasonSeg?.stats?.['rank'];
