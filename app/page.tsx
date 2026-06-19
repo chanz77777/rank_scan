@@ -20,7 +20,8 @@ declare global {
 }
 
 export default function Home() {
-  const [players, setPlayers] = useState<PlayerStats[]>([]);
+  const [allies, setAllies] = useState<PlayerStats[]>([]);
+  const [enemies, setEnemies] = useState<PlayerStats[]>([]);
   const [imagePath, setImagePath] = useState(DEFAULT_IMAGE_PATH);
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -92,72 +93,69 @@ export default function Home() {
             data[i + 2] = binValue; // B
           }
 
-          // 炎アイコンおよびUbisoft swirlアイコンの自動除去処理
+          // ============================================================
+          // 炎/Ubisoft swirlアイコンの自動除去処理（左マージン消去方式）
+          // ============================================================
+          // 各行について「最初に連続した白の空白ギャップが現れる位置まで」を
+          // 丸ごと白で塗りつぶす。これにより炎/スワールなどの左端アイコンを
+          // 形状に依存せず確実に除去できる。
           const rowCount = 10;
           const rowHeight = Math.floor(canvas.height / rowCount);
-          const maxScanX = Math.round(canvas.width * 0.35); // スキャン対象は左側の35%まで
+          // 左端からどこまでスキャンするか（プレイヤー名の先頭が入らない幅）
+          const maxScanX = Math.round(canvas.width * 0.30);
+          // 列が「黒い」とみなす最小黒ピクセル数（行高の4%以上で黒判定）
+          const colBlackThreshold = Math.max(1, Math.floor(rowHeight * 0.04));
+          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約3〜4px相当)
+          const whiteGapMinWidth = 12;
 
-          for (let r = 0; r < rowCount; r++) {
-            const yStart = r * rowHeight;
-            const yEnd = (r + 1) * rowHeight;
+          for (let row = 0; row < rowCount; row++) {
+            const yStart = row * rowHeight;
+            const yEnd = Math.min((row + 1) * rowHeight, canvas.height);
+            // 上下5%を除外してスキャン（境界線の干渉防止）
+            const scanYStart = yStart + Math.floor((yEnd - yStart) * 0.05);
+            const scanYEnd = yEnd - Math.floor((yEnd - yStart) * 0.05);
 
-            // 各列の黒ピクセル（文字・アイコン部分）数をカウント
+            // 各x列の黒ピクセル数を集計
             const colBlackCount = new Array(maxScanX).fill(0);
             for (let x = 0; x < maxScanX; x++) {
-              let blackPixels = 0;
-              // 上下の境界線の干渉を防ぐため、上下20%を除外してスキャン
-              const scanYStart = yStart + Math.floor(rowHeight * 0.2);
-              const scanYEnd = yEnd - Math.floor(rowHeight * 0.2);
-              
+              let cnt = 0;
               for (let y = scanYStart; y < scanYEnd; y++) {
-                const idx = (y * canvas.width + x) * 4;
-                if (data[idx] === 0) { // 黒ピクセル
-                  blackPixels++;
-                }
+                if (data[(y * canvas.width + x) * 4] === 0) cnt++;
               }
-              colBlackCount[x] = blackPixels;
+              colBlackCount[x] = cnt;
             }
 
-            // ブロブ（塊）の検出と消去
-            let inBlob = false;
-            let blobStart = -1;
-            const threshold = Math.max(2, Math.floor(rowHeight * 0.05)); // 5%以上で黒と判定
+            // 左端から右へ走査し、「黒い列が1つ以上あった後に
+            // whiteGapMinWidth 以上の連続白列が来た位置」を探す
+            let foundBlack = false;
+            let eraseUpTo = 0; // この列まで（含まない）を白に塗る
+            let whiteRun = 0;
 
             for (let x = 0; x < maxScanX; x++) {
-              const isBlack = colBlackCount[x] > threshold;
-              if (isBlack && !inBlob) {
-                inBlob = true;
-                blobStart = x;
-              } else if (!isBlack && inBlob) {
-                inBlob = false;
-                const blobEnd = x;
-                
-                // ブロブの直後に一定の空白（ギャップ）があるか確認
-                let hasGap = true;
-                const gapSize = 16; // 4x拡大なので16px（元の約4px）以上の空白
-                if (blobEnd + gapSize < maxScanX) {
-                  for (let gx = blobEnd; gx < blobEnd + gapSize; gx++) {
-                    if (colBlackCount[gx] > threshold) {
-                      hasGap = false;
-                      break;
-                    }
+              const isBlack = colBlackCount[x] > colBlackThreshold;
+              if (isBlack) {
+                foundBlack = true;
+                whiteRun = 0;
+              } else {
+                if (foundBlack) {
+                  whiteRun++;
+                  if (whiteRun >= whiteGapMinWidth) {
+                    // ギャップが見つかった：ギャップの開始位置（アイコン末尾+1）まで消去
+                    eraseUpTo = x - whiteGapMinWidth + 1;
+                    break;
                   }
-                } else {
-                  hasGap = false;
                 }
+              }
+            }
 
-                // 幅が小さく（12〜85px）、直後にギャップがあり、
-                // かつ開始位置が左側（x < 145）にある独立したブロブ（アイコン）を消去
-                const blobWidth = blobEnd - blobStart;
-                if (hasGap && blobWidth >= 12 && blobWidth <= 85 && blobStart < 145) {
-                  for (let eraseX = Math.max(0, blobStart - 2); eraseX < Math.min(canvas.width, blobEnd + 2); eraseX++) {
-                    for (let y = yStart; y < yEnd; y++) {
-                      const idx = (y * canvas.width + eraseX) * 4;
-                      data[idx] = 255;     // R
-                      data[idx + 1] = 255; // G
-                      data[idx + 2] = 255; // B
-                    }
-                  }
+            // eraseUpTo までの列を白に塗りつぶす
+            if (eraseUpTo > 0) {
+              for (let x = 0; x < eraseUpTo; x++) {
+                for (let y = yStart; y < yEnd; y++) {
+                  const idx = (y * canvas.width + x) * 4;
+                  data[idx] = 255;
+                  data[idx + 1] = 255;
+                  data[idx + 2] = 255;
                 }
               }
             }
@@ -317,7 +315,10 @@ export default function Home() {
       });
 
       // 各プレイヤーの詳細情報を取得
-      const playersData: PlayerStats[] = [];
+      // スコアボードは上5人が味方・下5人が敵の順番
+      const alliesData: PlayerStats[] = [];
+      const enemiesData: PlayerStats[] = [];
+
       for (let i = 0; i < playerIds.length; i++) {
         const playerId = playerIds[i];
         addDebugLog(`データ取得中 (${i + 1}/${playerIds.length}): ${playerId}`, 'info');
@@ -327,17 +328,24 @@ export default function Home() {
         );
         if (playerResponse.ok) {
           const playerData = await playerResponse.json();
-          playersData.push(playerData);
+          // 最初の5人を味方、残りを敵として分類
+          if (i < 5) {
+            alliesData.push(playerData);
+          } else {
+            enemiesData.push(playerData);
+          }
           addDebugLog(`✓ ${playerId} のデータ取得完了`, 'success');
         } else {
           addDebugLog(`✗ ${playerId} のデータ取得失敗 (${playerResponse.status})`, 'warning');
         }
       }
 
-      setPlayers(playersData);
-      if (playersData.length > 0) {
+      setAllies(alliesData);
+      setEnemies(enemiesData);
+      const total = alliesData.length + enemiesData.length;
+      if (total > 0) {
         addDebugLog(
-          `✓ すべてのプレイヤー情報を取得完了 (${playersData.length}人)`,
+          `✓ プレイヤー情報を取得完了 (味方${alliesData.length}人 / 敵${enemiesData.length}人)`,
           'success'
         );
       } else if (playerIds.length > 0) {
@@ -400,11 +408,12 @@ export default function Home() {
   };
 
   const handleRemovePlayer = (ubiId: string) => {
-    setPlayers((prev) =>
-      prev.filter((p) => p.ubiId.toLowerCase() !== ubiId.toLowerCase())
-    );
+    setAllies((prev) => prev.filter((p) => p.ubiId.toLowerCase() !== ubiId.toLowerCase()));
+    setEnemies((prev) => prev.filter((p) => p.ubiId.toLowerCase() !== ubiId.toLowerCase()));
     addDebugLog(`削除: ${ubiId}`, 'warning');
   };
+
+  const players = [...allies, ...enemies];
 
   const handleClearDebugLogs = () => {
     setDebugLogs([]);
@@ -605,8 +614,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* プレイヤーカード グリッド */}
-      <div className="max-w-7xl mx-auto">
+      {/* プレイヤーカード グリッド (5x2: 上行=味方, 下行=敵) */}
+      <div className="max-w-screen-2xl mx-auto">
         {players.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">
@@ -619,19 +628,54 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {players.map((player) => (
-              <div key={player.ubiId} className="relative group">
-                <PlayerStatsCard stats={player} />
-                <button
-                  onClick={() => handleRemovePlayer(player.ubiId)}
-                  className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
-                  title="削除"
-                >
-                  ×
-                </button>
+          <div className="space-y-6">
+            {/* 味方チーム */}
+            {allies.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-blue-400 mb-3 flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-blue-400"></span>
+                  味方チーム ({allies.length}人)
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {allies.map((player) => (
+                    <div key={player.ubiId} className="relative group">
+                      <PlayerStatsCard stats={player} />
+                      <button
+                        onClick={() => handleRemovePlayer(player.ubiId)}
+                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg text-sm"
+                        title="削除"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+
+            {/* 敵チーム */}
+            {enemies.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-red-400 mb-3 flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-red-400"></span>
+                  敵チーム ({enemies.length}人)
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {enemies.map((player) => (
+                    <div key={player.ubiId} className="relative group">
+                      <PlayerStatsCard stats={player} />
+                      <button
+                        onClick={() => handleRemovePlayer(player.ubiId)}
+                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg text-sm"
+                        title="削除"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
