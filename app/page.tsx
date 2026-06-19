@@ -12,6 +12,7 @@ export default function Home() {
   const [imagePath, setImagePath] = useState(DEFAULT_IMAGE_PATH);
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   // ページ読み込み時にデフォルト画像を処理
   useEffect(() => {
@@ -70,11 +71,45 @@ export default function Home() {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && file.type.startsWith('image/')) {
       setImageFile(file);
       setImagePath(file.name);
       // ファイル選択後に自動処理
       setTimeout(() => processImageFile(), 100);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        setImageFile(file);
+        setImagePath(file.name);
+        // ファイルドロップ後に自動処理
+        setTimeout(() => processImageFile(), 100);
+      }
     }
   };
 
@@ -97,8 +132,18 @@ export default function Home() {
           </p>
         </div>
 
-        {/* 画像ファイル選択フォーム */}
-        <div className="bg-slate-800 rounded-lg p-6 border border-slate-700 shadow-lg">
+        {/* ドラッグアンドドロップ＆ファイル選択エリア */}
+        <div
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          className={`bg-slate-800 rounded-lg p-8 border-2 transition-all duration-200 shadow-lg cursor-pointer ${
+            isDragActive
+              ? 'border-blue-500 bg-slate-700 ring-2 ring-blue-400'
+              : 'border-slate-700 hover:border-slate-600'
+          }`}
+        >
           <div className="space-y-4">
             {/* 現在の画像パス表示 */}
             <div className="bg-slate-700 rounded p-3 border border-slate-600">
@@ -107,7 +152,31 @@ export default function Home() {
               </p>
             </div>
 
-            {/* ファイル選択 */}
+            {/* ドラッグアンドドロップエリア */}
+            <div className="bg-slate-900 rounded-lg p-8 text-center border-2 border-dashed border-slate-600 hover:border-slate-500 transition-colors">
+              {isDragActive ? (
+                <div className="space-y-2">
+                  <p className="text-2xl">📥</p>
+                  <p className="text-lg font-semibold text-blue-400">
+                    ここにドロップしてください
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-3xl">🖼️</p>
+                  <div>
+                    <p className="text-lg font-semibold text-white">
+                      スクリーンショットをドラッグ＆ドロップ
+                    </p>
+                    <p className="text-sm text-slate-400 mt-1">
+                      または下のボタンをクリックして選択
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ファイル選択ボタン */}
             <div className="flex flex-col sm:flex-row gap-3">
               <label className="flex-1 relative">
                 <input
@@ -124,7 +193,7 @@ export default function Home() {
                     )
                   }
                 >
-                  🖼️ スクリーンショットを選択
+                  📂 ファイルを選択
                 </button>
               </label>
 
@@ -137,8 +206,8 @@ export default function Home() {
               </button>
             </div>
 
-            <p className="text-sm text-slate-400">
-              💡 スクリーンショット内のプレイヤーIDを自動抽出して、R6 Trackerから戦績を取得します
+            <p className="text-sm text-slate-400 text-center">
+              💡 対応形式: JPEG, PNG, WebP, JXR
             </p>
           </div>
         </div>
@@ -149,7 +218,7 @@ export default function Home() {
         {players.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">
-              スクリーンショットを選択するか、デフォルト画像を解析してください
+              スクリーンショットをドラッグ＆ドロップするか、ファイル選択してください
             </p>
             {isLoading && (
               <div className="mt-4 flex justify-center">
