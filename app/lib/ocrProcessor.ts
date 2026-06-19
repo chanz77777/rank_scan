@@ -25,8 +25,8 @@ export function parsePlayerIdsFromText(text: string): string[] {
   for (const line of lines) {
     if (!line) continue;
 
-    // アルファベット、数字、ドット、アンダースコア、ハイフン、スペースのみを許可
-    const cleanedLine = line.replace(/[^A-Za-z0-9._-\s]/g, '').trim();
+    // アルファベット、数字、ドット、アンダースコア、ハイフン、パイプ(|)、スペースのみを許可
+    const cleanedLine = line.replace(/[^A-Za-z0-9._\-\|\s]/g, '').trim();
     if (!cleanedLine) continue;
 
     // スペースで分割して単語ごとに処理
@@ -34,7 +34,7 @@ export function parsePlayerIdsFromText(text: string): string[] {
 
     for (const word of words) {
       // 記号とアルファベット/数字のみを抽出
-      const cleanWord = word.replace(/[^A-Za-z0-9._-]/g, '');
+      const cleanWord = word.replace(/[^A-Za-z0-9._\-\|]/g, '');
 
       // Uplay IDは3〜15文字。「YOU」は除外
       if (cleanWord.length >= 3 && cleanWord.length <= 15) {
