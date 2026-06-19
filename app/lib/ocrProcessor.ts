@@ -3,14 +3,14 @@
  * 画像からテキストを抽出してプレイヤーIDを識別
  */
 
-import fs from 'fs';
-import path from 'path';
+// ⬇️ エラーの原因になっていた fs と path のインポートを削除 ⬇️
+// import fs from 'fs';
+// import path from 'path';
 
 /**
  * R6 SiegeのスクリーンショットのテキストからプレイヤーIDを抽出
  * R6 Siegeスコアボードではプレイヤー名が表示される
- * 
- * @param text OCRで抽出されたテキスト
+ * * @param text OCRで抽出されたテキスト
  * @returns プレイヤーIDの配列
  */
 export function parsePlayerIdsFromText(text: string): string[] {
@@ -30,10 +30,7 @@ export function parsePlayerIdsFromText(text: string): string[] {
     if (!line) continue;
 
     // スコアボードのプレイヤー名候補を抽出
-    // - 短すぎる文字列や記号のみは除外
-    // - ゲーム内の特殊情報（キルスコア、デス数など）は除外
     if (line.length > 2 && line.length < 50) {
-      // スコア情報を含む行をフィルタ（数字が3つ以上連続なら除外）
       if (/\d{3,}/.test(line)) {
         // スコアボード行として処理：プレイヤー名部分を抽出
         // 例: "Player1  5  3  +2" -> "Player1"
@@ -45,7 +42,6 @@ export function parsePlayerIdsFromText(text: string): string[] {
           }
         }
       } else if (!/[\(\)\[\]\{\}]/.test(line)) {
-        // 括弧なしの行（UIテキストではない可能性が高い）
         if (!seen.has(line.toLowerCase())) {
           playerIds.push(line);
           seen.add(line.toLowerCase());
@@ -56,14 +52,3 @@ export function parsePlayerIdsFromText(text: string): string[] {
 
   return playerIds;
 }
-
-/**
- * 画像ファイルをBase64に変換
- * @param filePath ファイルパス
- * @returns Base64エンコード文字列
- */
-export function imageToBase64(filePath: string): string {
-  const imageBuffer = fs.readFileSync(filePath);
-  return imageBuffer.toString('base64');
-}
-
