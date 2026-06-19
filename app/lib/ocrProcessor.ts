@@ -18,33 +18,31 @@ export function parsePlayerIdsFromText(text: string): string[] {
     return [];
   }
 
-  // プレイヤーID（ユーザー名）の候補を抽出
-  // R6 Siegeのスコアボードから読み込まれる名前のパターン
   const lines = text.split('\n').map((line) => line.trim());
-
   const playerIds: string[] = [];
-  const seen = new Set<string>(); // 重複排除用
+  const seen = new Set<string>();
 
   for (const line of lines) {
-    // 空白行はスキップ
     if (!line) continue;
 
-    // スコアボードのプレイヤー名候補を抽出
-    if (line.length > 2 && line.length < 50) {
-      if (/\d{3,}/.test(line)) {
-        // スコアボード行として処理：プレイヤー名部分を抽出
-        // 例: "Player1  5  3  +2" -> "Player1"
-        const namePart = line.replace(/\s+\d+\s+\d+.*$/, '').trim();
-        if (namePart && namePart.length > 2 && namePart.length < 40) {
-          if (!seen.has(namePart.toLowerCase())) {
-            playerIds.push(namePart);
-            seen.add(namePart.toLowerCase());
-          }
-        }
-      } else if (!/[\(\)\[\]\{\}]/.test(line)) {
-        if (!seen.has(line.toLowerCase())) {
-          playerIds.push(line);
-          seen.add(line.toLowerCase());
+    // アルファベット、数字、ドット、アンダースコア、ハイフン、スペースのみを許可
+    const cleanedLine = line.replace(/[^A-Za-z0-9._-\s]/g, '').trim();
+    if (!cleanedLine) continue;
+
+    // スペースで分割して単語ごとに処理
+    const words = cleanedLine.split(/\s+/);
+
+    for (const word of words) {
+      // 記号とアルファベット/数字のみを抽出
+      const cleanWord = word.replace(/[^A-Za-z0-9._-]/g, '');
+
+      // Uplay IDは3〜15文字。「YOU」は除外
+      if (cleanWord.length >= 3 && cleanWord.length <= 15) {
+        if (cleanWord.toUpperCase() === 'YOU') continue;
+
+        if (!seen.has(cleanWord.toLowerCase())) {
+          playerIds.push(cleanWord);
+          seen.add(cleanWord.toLowerCase());
         }
       }
     }

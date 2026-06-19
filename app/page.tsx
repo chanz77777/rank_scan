@@ -29,10 +29,53 @@ export default function Home() {
   const [extractedPlayerIds, setExtractedPlayerIds] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(true);
   const [tesseractReady, setTesseractReady] = useState(false);
+  const [autoCrop, setAutoCrop] = useState(true);
+  const [croppedImage, setCroppedImage] = useState<string>('');
 
   const addDebugLog = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
     const now = new Date().toLocaleTimeString('ja-JP');
     setDebugLogs((prev) => [...prev, { timestamp: now, message, type }].slice(-30)); // 最新30件のみ保持
+  };
+
+  // 画像からスコアボードのプレイヤー名列部分（中央の特定エリア）を切り抜く
+  const cropImageToCenterGrid = (base64Str: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
+
+          const width = img.naturalWidth;
+          const height = img.naturalHeight;
+
+          // スコアボードのプレイヤー名列の切り抜き範囲比率
+          // 横: 33% 〜 50%
+          // 縦: 29% 〜 80%
+          const cropX = Math.round(width * 0.33);
+          const cropY = Math.round(height * 0.29);
+          const cropW = Math.round(width * 0.17);
+          const cropH = Math.round(height * 0.51);
+
+          canvas.width = cropW;
+          canvas.height = cropH;
+
+          ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+          // PNG形式でBase64書き出し
+          const croppedBase64 = canvas.toDataURL('image/png').split(',')[1];
+          resolve(croppedBase64);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = (err) => reject(new Error('Failed to load image for cropping'));
+      img.src = `data:image/png;base64,${base64Str}`;
+    });
   };
 
   // Tesseract.jsを読み込み
@@ -80,6 +123,7 @@ export default function Home() {
 
     setIsLoading(true);
     addDebugLog(`画像処理開始`, 'info');
+    setCroppedImage('');
 
     try {
       let base64Image: string;
@@ -126,13 +170,26 @@ export default function Home() {
 
       addDebugLog(`✓ Base64変換完了 (${(base64Image.length / 1024).toFixed(1)}KB)`, 'success');
 
+      let ocrInputBase64 = base64Image;
+      if (autoCrop) {
+        try {
+          addDebugLog('✂️ スコアボードID部分を自動切り抜き中...', 'info');
+          const cropped = await cropImageToCenterGrid(base64Image);
+          ocrInputBase64 = cropped;
+          setCroppedImage(cropped);
+          addDebugLog('✓ 切り抜き成功', 'success');
+        } catch (cropErr: any) {
+          addDebugLog(`⚠️ 切り抜きに失敗しました (元画像で処理します): ${cropErr.message || cropErr}`, 'warning');
+        }
+      }
+
       // Tesseract.jsでOCR処理
-      addDebugLog(`🔍 OCR処理開始 (日本語+英語)...`, 'info');
+      addDebugLog(`🔍 OCR処理開始 (英語のみ)...`, 'info');
       const Tesseract = (window as any).Tesseract;
 
       const result = await Tesseract.recognize(
-        `data:image/png;base64,${base64Image}`,
-        ['jpn', 'eng'],
+        `data:image/png;base64,${ocrInputBase64}`,
+        'eng',
         {
           logger: (m: any) => {
             if (m.status === 'recognizing text') {
@@ -335,6 +392,34 @@ export default function Home() {
                 {isLoading ? '⏳ 処理中...' : '🔍 解析'}
               </button>
             </div>
+
+            {/* 切り抜き設定トグル */}
+            <div className="flex items-center space-x-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+              <input
+                type="checkbox"
+                id="autoCropToggle"
+                checked={autoCrop}
+                onChange={(e) => setAutoCrop(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-offset-slate-800"
+              />
+              <label htmlFor="autoCropToggle" className="text-sm font-medium text-slate-300 cursor-pointer select-none">
+                ✂️ スコアボード自動切り抜き (中央プレイヤーID列のみをOCR)
+              </label>
+            </div>
+
+            {/* 切り抜きプレビュー */}
+            {croppedImage && (
+              <div className="bg-slate-900 p-4 rounded-lg border border-slate-700 flex flex-col items-center">
+                <p className="text-xs text-slate-400 mb-2 font-semibold uppercase tracking-wider">
+                  切り抜きプレビュー (OCR対象エリア)
+                </p>
+                <img
+                  src={`data:image/png;base64,${croppedImage}`}
+                  alt="Cropped scoreboard preview"
+                  className="max-h-48 object-contain border border-slate-700 rounded shadow-md"
+                />
+              </div>
+            )}
 
             <p className="text-sm text-slate-400 text-center">
               💡 対応形式: JPEG, PNG, WebP, JXR
