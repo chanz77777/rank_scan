@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import PlayerStatsCard from '@/app/components/PlayerStatsCard';
 import { PlayerStats } from '@/app/lib/types';
-import { mockPlayerData } from '@/app/lib/mockData';
+import { parsePlayerIdsFromText } from '@/app/lib/ocrProcessor';
 
 const DEFAULT_IMAGE_PATH = 'C:\\Users\\yuuch\\Pictures\\Desktop Screenshot 2026.06.19 - 15.08.38.64.jxr.jpg';
 
@@ -11,6 +11,12 @@ interface DebugLog {
   timestamp: string;
   message: string;
   type: 'info' | 'success' | 'error' | 'warning';
+}
+
+declare global {
+  interface Window {
+    Tesseract: typeof import('tesseract.js').default;
+  }
 }
 
 export default function Home() {
@@ -22,17 +28,44 @@ export default function Home() {
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [extractedPlayerIds, setExtractedPlayerIds] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(true);
+  const [tesseractReady, setTesseractReady] = useState(false);
 
   const addDebugLog = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
     const now = new Date().toLocaleTimeString('ja-JP');
-    setDebugLogs((prev) => [...prev, { timestamp: now, message, type }].slice(-20)); // 最新20件のみ保持
+    setDebugLogs((prev) => [...prev, { timestamp: now, message, type }].slice(-30)); // 最新30件のみ保持
   };
 
-  // ページ読み込み時にデフォルト画像を処理
+  // Tesseract.jsを読み込み
   useEffect(() => {
-    addDebugLog('ページ初期化完了', 'info');
-    processImageFile();
+    const loadTesseract = async () => {
+      try {
+        // CDNからTesseract.jsを読み込み
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js';
+        script.async = true;
+        script.onload = () => {
+          addDebugLog('✓ Tesseract.js を読み込みました', 'success');
+          setTesseractReady(true);
+        };
+        script.onerror = () => {
+          addDebugLog('✗ Tesseract.js の読み込みに失敗しました', 'error');
+        };
+        document.head.appendChild(script);
+      } catch (error) {
+        addDebugLog(`✗ Tesseract読み込みエラー: ${error}`, 'error');
+      }
+    };
+
+    loadTesseract();
   }, []);
+
+  // ページ読み込み時にデフォルト画像を処理（Tesseract準備後）
+  useEffect(() => {
+    if (tesseractReady) {
+      addDebugLog('ページ初期化完了', 'info');
+      processImageFile();
+    }
+  }, [tesseractReady]);
 
   const processImageFile = async () => {
     if (!imageFile && !imagePath) {
@@ -40,11 +73,17 @@ export default function Home() {
       return;
     }
 
+    if (!tesseractReady) {
+      addDebugLog('⚠️ Tesseract.jsを読み込み中です。お待ちください...', 'warning');
+      return;
+    }
+
     setIsLoading(true);
     addDebugLog(`画像処理開始`, 'info');
 
     try {
-      let response;
+      let base64Image: string;
+      let fileName: string;
 
       if (imageFile) {
         // ファイルがある場合はFormDataで送信
@@ -52,66 +91,95 @@ export default function Home() {
         const formData = new FormData();
         formData.append('file', imageFile);
 
-        response = await fetch('/api/process-image', {
+        const response = await fetch('/api/process-image', {
           method: 'POST',
           body: formData,
         });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        base64Image = data.base64Image;
+        fileName = data.fileName;
       } else {
         // ファイルパスを使用する場合
         addDebugLog(`ファイルパス処理: ${imagePath}`, 'info');
-        response = await fetch('/api/process-image', {
+        const response = await fetch('/api/process-image', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ imagePath }),
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.details || error.error);
+        }
+
+        const data = await response.json();
+        base64Image = data.base64Image;
+        fileName = data.fileName;
       }
 
-      if (response.ok) {
-        const data = await response.json();
+      addDebugLog(`✓ Base64変換完了 (${(base64Image.length / 1024).toFixed(1)}KB)`, 'success');
 
-        // 抽出されたプレイヤーIDを取得
-        const playerIds = (data.playerIds as string[]) || [];
-        setExtractedPlayerIds(playerIds);
-        addDebugLog(`✓ プレイヤーID抽出成功 (${playerIds.length}人)`, 'success');
-        playerIds.forEach((id, idx) => {
-          addDebugLog(`  [${idx + 1}] ${id}`, 'info');
-        });
+      // Tesseract.jsでOCR処理
+      addDebugLog(`🔍 OCR処理開始 (日本語+英語)...`, 'info');
+      const Tesseract = (window as any).Tesseract;
 
-        // 各プレイヤーの詳細情報を取得
-        const playersData: PlayerStats[] = [];
-        for (let i = 0; i < playerIds.length; i++) {
-          const playerId = playerIds[i];
-          addDebugLog(`データ取得中 (${i + 1}/${playerIds.length}): ${playerId}`, 'info');
-
-          const playerResponse = await fetch(
-            `/api/tracker?ubiId=${encodeURIComponent(playerId)}`
-          );
-          if (playerResponse.ok) {
-            const playerData = await playerResponse.json();
-            playersData.push(playerData);
-            addDebugLog(`✓ ${playerId} のデータ取得完了`, 'success');
-          } else {
-            addDebugLog(`✗ ${playerId} のデータ取得失敗 (${playerResponse.status})`, 'warning');
-          }
+      const result = await Tesseract.recognize(
+        `data:image/png;base64,${base64Image}`,
+        ['jpn', 'eng'],
+        {
+          logger: (m: any) => {
+            if (m.status === 'recognizing text') {
+              const percent = Math.round(m.progress * 100);
+              console.log(`OCR Progress: ${percent}%`);
+            }
+          },
         }
+      );
 
-        setPlayers(playersData);
-        if (playersData.length > 0) {
-          addDebugLog(
-            `✓ すべてのプレイヤー情報を取得完了 (${playersData.length}人)`,
-            'success'
-          );
-        } else {
-          addDebugLog('⚠️ プレイヤーIDは抽出されましたが、データ取得に失敗しました', 'warning');
-        }
-      } else {
-        const errorData = await response.json();
-        addDebugLog(
-          `✗ API処理失敗: ${errorData.error || '不明なエラー'}`,
-          'error'
+      const extractedText = result.data.text;
+      addDebugLog(`✓ OCR完了 (${extractedText.length}文字)`, 'success');
+
+      // テキストからプレイヤーIDを抽出
+      const playerIds = parsePlayerIdsFromText(extractedText);
+      setExtractedPlayerIds(playerIds);
+      addDebugLog(`✓ プレイヤーID抽出成功 (${playerIds.length}人)`, 'success');
+      playerIds.forEach((id, idx) => {
+        addDebugLog(`  [${idx + 1}] ${id}`, 'info');
+      });
+
+      // 各プレイヤーの詳細情報を取得
+      const playersData: PlayerStats[] = [];
+      for (let i = 0; i < playerIds.length; i++) {
+        const playerId = playerIds[i];
+        addDebugLog(`データ取得中 (${i + 1}/${playerIds.length}): ${playerId}`, 'info');
+
+        const playerResponse = await fetch(
+          `/api/tracker?ubiId=${encodeURIComponent(playerId)}`
         );
+        if (playerResponse.ok) {
+          const playerData = await playerResponse.json();
+          playersData.push(playerData);
+          addDebugLog(`✓ ${playerId} のデータ取得完了`, 'success');
+        } else {
+          addDebugLog(`✗ ${playerId} のデータ取得失敗 (${playerResponse.status})`, 'warning');
+        }
+      }
+
+      setPlayers(playersData);
+      if (playersData.length > 0) {
+        addDebugLog(
+          `✓ すべてのプレイヤー情報を取得完了 (${playersData.length}人)`,
+          'success'
+        );
+      } else if (playerIds.length > 0) {
+        addDebugLog('⚠️ プレイヤーIDは抽出されましたが、データ取得に失敗しました', 'warning');
       }
     } catch (error) {
       console.error('Error processing image:', error);

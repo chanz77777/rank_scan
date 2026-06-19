@@ -1,71 +1,10 @@
 /**
- * OCR処理 - Tesseract.js を使用
+ * OCR処理 - Tesseract.js をクライアント側で実行
  * 画像からテキストを抽出してプレイヤーIDを識別
  */
 
-import Tesseract from 'tesseract.js';
 import fs from 'fs';
 import path from 'path';
-
-/**
- * ファイルパスから画像を読み込んでOCR処理
- * @param imagePath 画像ファイルのパス
- * @returns 抽出されたプレイヤーIDの配列
- */
-export async function extractPlayerIdsFromImagePath(
-  imagePath: string
-): Promise<string[]> {
-  try {
-    // ファイルが存在するか確認
-    if (!fs.existsSync(imagePath)) {
-      throw new Error(`Image file not found: ${imagePath}`);
-    }
-
-    // ファイルを読み込み
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-
-    // OCR処理
-    return await extractPlayerIdsFromBase64(base64Image);
-  } catch (error) {
-    console.error('Error reading image file:', error);
-    throw error;
-  }
-}
-
-/**
- * Base64エンコードされた画像からプレイヤーIDを抽出
- * @param base64Image Base64エンコードされた画像データ
- * @returns 抽出されたプレイヤーIDの配列
- */
-export async function extractPlayerIdsFromBase64(
-  base64Image: string
-): Promise<string[]> {
-  try {
-    // Tesseract.jsでOCR処理（日本語対応）
-    const result = await Tesseract.recognize(
-      `data:image/png;base64,${base64Image}`,
-      'jpn+eng', // 日本語と英語
-      {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-          }
-        },
-      }
-    );
-
-    const extractedText = result.data.text;
-    console.log('Extracted text:', extractedText);
-
-    // テキストからプレイヤーIDを抽出
-    const playerIds = parsePlayerIdsFromText(extractedText);
-    return playerIds;
-  } catch (error) {
-    console.error('OCR Error:', error);
-    throw error;
-  }
-}
 
 /**
  * R6 SiegeのスクリーンショットのテキストからプレイヤーIDを抽出
@@ -127,3 +66,4 @@ export function imageToBase64(filePath: string): string {
   const imageBuffer = fs.readFileSync(filePath);
   return imageBuffer.toString('base64');
 }
+

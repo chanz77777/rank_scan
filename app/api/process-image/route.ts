@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractPlayerIdsFromImagePath, extractPlayerIdsFromBase64 } from '@/app/lib/ocrProcessor';
+import fs from 'fs';
 
 /**
  * 画像処理 API エンドポイント
- * スクリーンショットからプレイヤーIDを抽出（Tesseract.js使用）
+ * 画像ファイルをBase64に変換してクライアント側でOCR処理するために返す
  * 
  * POST /api/process-image
  * Body: { imagePath?: string } または FormData with file
@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || '';
 
-    let playerIds: string[] = [];
+    let base64Image: string | null = null;
+    let fileName = '';
 
     if (contentType.includes('application/json')) {
       // JSONボディから画像パスを取得
@@ -26,10 +27,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log('Processing image from path:', imagePath);
+      console.log('Reading image from path:', imagePath);
 
-      // ファイルパスからOCR処理
-      playerIds = await extractPlayerIdsFromImagePath(imagePath);
+      // ファイルが存在するか確認
+      if (!fs.existsSync(imagePath)) {
+        return NextResponse.json(
+          { error: `Image file not found: ${imagePath}` },
+          { status: 404 }
+        );
+      }
+
+      // ファイルを読み込んでBase64に変換
+      const imageBuffer = fs.readFileSync(imagePath);
+      base64Image = imageBuffer.toString('base64');
+      fileName = imagePath.split('\\').pop() || 'image';
     } else if (contentType.includes('multipart/form-data')) {
       // FormDataから画像ファイルを取得
       const formData = await request.formData();
@@ -46,10 +57,8 @@ export async function POST(request: NextRequest) {
 
       // ファイルをBase64に変換
       const buffer = await file.arrayBuffer();
-      const base64 = Buffer.from(buffer).toString('base64');
-
-      // Base64からOCR処理
-      playerIds = await extractPlayerIdsFromBase64(base64);
+      base64Image = Buffer.from(buffer).toString('base64');
+      fileName = file.name;
     } else {
       return NextResponse.json(
         { error: 'Content-Type must be application/json or multipart/form-data' },
@@ -58,10 +67,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      playerIds: playerIds,
-      count: playerIds.length,
+      base64Image: base64Image,
+      fileName: fileName,
       timestamp: new Date().toISOString(),
-      message: `Extracted ${playerIds.length} player IDs from image`,
+      message: 'Image converted to Base64. Client-side OCR processing required.',
     });
   } catch (error) {
     console.error('API Error:', error);
@@ -83,9 +92,9 @@ export async function GET(request: NextRequest) {
   if (testMode) {
     return NextResponse.json({
       status: 'ready',
-      message: 'Image processing API with Tesseract.js is ready',
-      supportedFormats: ['jpeg', 'jpg', 'png', 'webp', 'tiff', 'jxr'],
-      ocrEngine: 'Tesseract.js',
+      message: 'Image processing API is ready',
+      supportedFormats: ['jpeg', 'jpg', 'png', 'webp', 'tiff', 'bmp', 'jxr'],
+      ocrEngine: 'Tesseract.js (Client-side)',
       languages: ['jpn', 'eng'],
       note: 'Send POST request with imagePath or file to /api/process-image',
     });
