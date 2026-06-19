@@ -1,99 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parsePlayerIdsFromText } from '@/app/lib/imageProcessor';
+import { extractPlayerIdsFromImagePath, extractPlayerIdsFromBase64 } from '@/app/lib/ocrProcessor';
 
 /**
  * 画像処理 API エンドポイント
- * スクリーンショットからプレイヤーIDを抽出
+ * スクリーンショットからプレイヤーIDを抽出（Tesseract.js使用）
  * 
  * POST /api/process-image
- * Body: { imagePath?: string, useFile?: boolean }
+ * Body: { imagePath?: string } または FormData with file
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { imagePath } = body;
+    const contentType = request.headers.get('content-type') || '';
 
-    // Note: 本実装では以下の方法で画像処理を実装：
-    // 1. fs（ファイルシステム）でローカルファイルを読み込み
-    // 2. Base64 に変換
-    // 3. Claude Vision API または Tesseract.js で OCR
-    // 4. テキストから プレイヤーID を抽出
+    let playerIds: string[] = [];
 
-    // 現在のモック実装
-    if (imagePath) {
-      console.log('Processing image:', imagePath);
-      
-      // テンプレート実装：
-      // const fs = require('fs');
-      // const path = require('path');
-      // 
-      // try {
-      //   const fileContent = fs.readFileSync(imagePath);
-      //   const base64 = fileContent.toString('base64');
-      //   
-      //   // Claude Vision API を呼び出し
-      //   const response = await fetch('https://api.anthropic.com/v1/messages', {
-      //     method: 'POST',
-      //     headers: {
-      //       'x-api-key': process.env.ANTHROPIC_API_KEY,
-      //       'content-type': 'application/json',
-      //     },
-      //     body: JSON.stringify({
-      //       model: 'claude-3-5-sonnet-20241022',
-      //       max_tokens: 1024,
-      //       messages: [{
-      //         role: 'user',
-      //         content: [
-      //           {
-      //             type: 'image',
-      //             source: {
-      //               type: 'base64',
-      //               media_type: 'image/jpeg',
-      //               data: base64,
-      //             },
-      //           },
-      //           {
-      //             type: 'text',
-      //             text: `このR6 Siegeのゲームスクリーンショットから
-      //                   プレイヤー名/IDを全て抽出してください。
-      //                   JSONで返してください。
-      //                   例: {"playerIds": ["Player1", "Player2"]}`
-      //           }
-      //         ],
-      //       }],
-      //     }),
-      //   });
-      //   
-      //   const data = await response.json();
-      //   const extractedText = data.content[0].text;
-      //   const parsed = JSON.parse(extractedText);
-      //   
-      //   return NextResponse.json({
-      //     playerIds: parsed.playerIds,
-      //     confidence: 0.95,
-      //   });
-      // } catch (error) {
-      //   console.error('File read error:', error);
-      // }
+    if (contentType.includes('application/json')) {
+      // JSONボディから画像パスを取得
+      const body = await request.json();
+      const { imagePath } = body;
+
+      if (!imagePath) {
+        return NextResponse.json(
+          { error: 'imagePath is required' },
+          { status: 400 }
+        );
+      }
+
+      console.log('Processing image from path:', imagePath);
+
+      // ファイルパスからOCR処理
+      playerIds = await extractPlayerIdsFromImagePath(imagePath);
+    } else if (contentType.includes('multipart/form-data')) {
+      // FormDataから画像ファイルを取得
+      const formData = await request.formData();
+      const file = formData.get('file') as File;
+
+      if (!file) {
+        return NextResponse.json(
+          { error: 'file is required' },
+          { status: 400 }
+        );
+      }
+
+      console.log('Processing uploaded image:', file.name);
+
+      // ファイルをBase64に変換
+      const buffer = await file.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString('base64');
+
+      // Base64からOCR処理
+      playerIds = await extractPlayerIdsFromBase64(base64);
+    } else {
+      return NextResponse.json(
+        { error: 'Content-Type must be application/json or multipart/form-data' },
+        { status: 400 }
+      );
     }
 
-    // フォールバック：デモ用の固定プレイヤーID
     return NextResponse.json({
-      playerIds: ['TokyoDisneyland', 'SamplePlayer2', 'SamplePlayer3'],
-      confidence: 0.8,
-      message: 'Using demo data. For real image processing, configure Claude API.',
+      playerIds: playerIds,
+      count: playerIds.length,
+      timestamp: new Date().toISOString(),
+      message: `Extracted ${playerIds.length} player IDs from image`,
     });
   } catch (error) {
     console.error('API Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to process image' },
+      { error: 'Failed to process image', details: errorMessage },
       { status: 500 }
     );
   }
 }
 
 /**
- * GET エンドポイント（テスト用）
+ * GET エンドポイント（ヘルスチェック）
  * /api/process-image?testMode=true
  */
 export async function GET(request: NextRequest) {
@@ -102,9 +83,11 @@ export async function GET(request: NextRequest) {
   if (testMode) {
     return NextResponse.json({
       status: 'ready',
-      message: 'Image processing API is ready',
-      supportedFormats: ['jpeg', 'jpg', 'png', 'webp', 'jxr'],
-      note: 'Send POST request with image to /api/process-image',
+      message: 'Image processing API with Tesseract.js is ready',
+      supportedFormats: ['jpeg', 'jpg', 'png', 'webp', 'tiff', 'jxr'],
+      ocrEngine: 'Tesseract.js',
+      languages: ['jpn', 'eng'],
+      note: 'Send POST request with imagePath or file to /api/process-image',
     });
   }
 
