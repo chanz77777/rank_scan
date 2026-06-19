@@ -5,7 +5,7 @@ import PlayerStatsCard from '@/app/components/PlayerStatsCard';
 import { PlayerStats } from '@/app/lib/types';
 import { parsePlayerIdsFromText } from '@/app/lib/ocrProcessor';
 
-const DEFAULT_IMAGE_PATH = 'C:\\Users\\yuuch\\Pictures\\Desktop Screenshot 2026.06.19 - 15.08.38.64.jxr.jpg';
+const DEFAULT_IMAGE_PATH = '';
 
 interface DebugLog {
   timestamp: string;
@@ -54,17 +54,44 @@ export default function Home() {
           const height = img.naturalHeight;
 
           // スコアボードのプレイヤー名列の切り抜き範囲比率
-          // 横: 33% 〜 50%
-          // 縦: 29% 〜 80%
-          const cropX = Math.round(width * 0.33);
+          // アイコン類を極力除外するため、開始Xを 35.5% に調整
+          // 横: 35.5% 〜 50% (幅 14.5%)
+          // 縦: 29% 〜 80% (高さ 51%)
+          const cropX = Math.round(width * 0.355);
           const cropY = Math.round(height * 0.29);
-          const cropW = Math.round(width * 0.17);
+          const cropW = Math.round(width * 0.145);
           const cropH = Math.round(height * 0.51);
 
-          canvas.width = cropW;
-          canvas.height = cropH;
+          // Tesseractの認識精度向上のため、3倍に拡大する
+          const scale = 3;
+          canvas.width = cropW * scale;
+          canvas.height = cropH * scale;
 
-          ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+          // 画像処理（二値化・白黒反転）
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            // 輝度 (グレースケール)
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            // 二値化 & 白黒反転 (文字を黒[0]、背景を白[255]にする)
+            // しきい値は 125
+            const binValue = gray > 125 ? 0 : 255;
+
+            data[i] = binValue;     // R
+            data[i + 1] = binValue; // G
+            data[i + 2] = binValue; // B
+          }
+          ctx.putImageData(imgData, 0, 0);
 
           // PNG形式でBase64書き出し
           const croppedBase64 = canvas.toDataURL('image/png').split(',')[1];
@@ -102,11 +129,13 @@ export default function Home() {
     loadTesseract();
   }, []);
 
-  // ページ読み込み時にデフォルト画像を処理（Tesseract準備後）
+  // ページ読み込み時の初期化（画像パスまたはファイルがある場合のみ処理）
   useEffect(() => {
     if (tesseractReady) {
       addDebugLog('ページ初期化完了', 'info');
-      processImageFile();
+      if (imageFile || imagePath) {
+        processImageFile();
+      }
     }
   }, [tesseractReady]);
 
