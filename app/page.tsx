@@ -62,8 +62,8 @@ export default function Home() {
           const cropW = Math.round(width * 0.14);
           const cropH = Math.round(height * 0.51);
 
-          // Tesseractの認識精度向上のため、3倍に拡大する
-          const scale = 3;
+          // Tesseractの認識精度向上のため、4倍に拡大する
+          const scale = 4;
           canvas.width = cropW * scale;
           canvas.height = cropH * scale;
 
@@ -84,8 +84,8 @@ export default function Home() {
             const gray = 0.299 * r + 0.587 * g + 0.114 * b;
 
             // 二値化 & 白黒反転 (文字を黒[0]、背景を白[255]にする)
-            // しきい値は 125
-            const binValue = gray > 125 ? 0 : 255;
+            // 文字同士の癒着（特にGとドットなど）を防ぎ、文字を細めにして境界をくっきりさせるため、しきい値を 140 に設定
+            const binValue = gray > 140 ? 0 : 255;
 
             data[i] = binValue;     // R
             data[i + 1] = binValue; // G
@@ -134,7 +134,7 @@ export default function Home() {
                 
                 // ブロブの直後に一定の空白（ギャップ）があるか確認
                 let hasGap = true;
-                const gapSize = 12; // 3x拡大なので12px（元の約4px）以上の空白
+                const gapSize = 16; // 4x拡大なので16px（元の約4px）以上の空白
                 if (blobEnd + gapSize < maxScanX) {
                   for (let gx = blobEnd; gx < blobEnd + gapSize; gx++) {
                     if (colBlackCount[gx] > threshold) {
@@ -146,10 +146,10 @@ export default function Home() {
                   hasGap = false;
                 }
 
-                // 幅が小さく（10〜65px）、直後にギャップがあり、
-                // かつ開始位置が左側（x < 110）にある独立したブロブ（アイコン）を消去
+                // 幅が小さく（12〜85px）、直後にギャップがあり、
+                // かつ開始位置が左側（x < 145）にある独立したブロブ（アイコン）を消去
                 const blobWidth = blobEnd - blobStart;
-                if (hasGap && blobWidth >= 10 && blobWidth <= 65 && blobStart < 110) {
+                if (hasGap && blobWidth >= 12 && blobWidth <= 85 && blobStart < 145) {
                   for (let eraseX = Math.max(0, blobStart - 2); eraseX < Math.min(canvas.width, blobEnd + 2); eraseX++) {
                     for (let y = yStart; y < yEnd; y++) {
                       const idx = (y * canvas.width + eraseX) * 4;

@@ -29,21 +29,15 @@ export function parsePlayerIdsFromText(text: string): string[] {
     const cleanedLine = line.replace(/[^A-Za-z0-9._\-\|\s]/g, '').trim();
     if (!cleanedLine) continue;
 
-    // スペースで分割して単語ごとに処理
-    const words = cleanedLine.split(/\s+/);
+    // 1行に1人分のIDという仕様に基づき、行内のスペースはアンダースコア（Tesseractが誤読したもの）に変換して結合する
+    const lineWithUnderscores = cleanedLine.replace(/\s+/g, '_');
+    const cleanWord = lineWithUnderscores.replace(/[^A-Za-z0-9._\-\|]/g, '');
 
-    for (const word of words) {
-      // 記号とアルファベット/数字のみを抽出
-      const cleanWord = word.replace(/[^A-Za-z0-9._\-\|]/g, '');
-
-      // Uplay IDは3〜15文字。「YOU」は除外
-      if (cleanWord.length >= 3 && cleanWord.length <= 15) {
-        if (cleanWord.toUpperCase() === 'YOU') continue;
-
-        if (!seen.has(cleanWord.toLowerCase())) {
-          playerIds.push(cleanWord);
-          seen.add(cleanWord.toLowerCase());
-        }
+    // Uplay IDは3〜15文字
+    if (cleanWord.length >= 3 && cleanWord.length <= 15) {
+      if (!seen.has(cleanWord.toLowerCase())) {
+        playerIds.push(cleanWord);
+        seen.add(cleanWord.toLowerCase());
       }
     }
   }
