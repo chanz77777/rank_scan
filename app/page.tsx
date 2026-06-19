@@ -15,7 +15,7 @@ interface DebugLog {
 
 declare global {
   interface Window {
-    Tesseract: typeof import('tesseract.js').default;
+    Tesseract: typeof import('tesseract.js');
   }
 }
 
