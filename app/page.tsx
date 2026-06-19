@@ -54,12 +54,12 @@ export default function Home() {
           const height = img.naturalHeight;
 
           // スコアボードのプレイヤー名列の切り抜き範囲比率
-          // アイコン類を極力除外するため、開始Xを 35.5% に調整
-          // 横: 35.5% 〜 50% (幅 14.5%)
+          // 名前の先頭（左端）が切れず、かつ右端のランクアイコンや境界線が入らないよう調整
+          // 横: 32.5% 〜 46.5% (幅 14.0%)
           // 縦: 29% 〜 80% (高さ 51%)
-          const cropX = Math.round(width * 0.355);
+          const cropX = Math.round(width * 0.325);
           const cropY = Math.round(height * 0.29);
-          const cropW = Math.round(width * 0.145);
+          const cropW = Math.round(width * 0.14);
           const cropH = Math.round(height * 0.51);
 
           // Tesseractの認識精度向上のため、3倍に拡大する
@@ -91,6 +91,78 @@ export default function Home() {
             data[i + 1] = binValue; // G
             data[i + 2] = binValue; // B
           }
+
+          // 炎アイコンおよびUbisoft swirlアイコンの自動除去処理
+          const rowCount = 10;
+          const rowHeight = Math.floor(canvas.height / rowCount);
+          const maxScanX = Math.round(canvas.width * 0.35); // スキャン対象は左側の35%まで
+
+          for (let r = 0; r < rowCount; r++) {
+            const yStart = r * rowHeight;
+            const yEnd = (r + 1) * rowHeight;
+
+            // 各列の黒ピクセル（文字・アイコン部分）数をカウント
+            const colBlackCount = new Array(maxScanX).fill(0);
+            for (let x = 0; x < maxScanX; x++) {
+              let blackPixels = 0;
+              // 上下の境界線の干渉を防ぐため、上下20%を除外してスキャン
+              const scanYStart = yStart + Math.floor(rowHeight * 0.2);
+              const scanYEnd = yEnd - Math.floor(rowHeight * 0.2);
+              
+              for (let y = scanYStart; y < scanYEnd; y++) {
+                const idx = (y * canvas.width + x) * 4;
+                if (data[idx] === 0) { // 黒ピクセル
+                  blackPixels++;
+                }
+              }
+              colBlackCount[x] = blackPixels;
+            }
+
+            // ブロブ（塊）の検出と消去
+            let inBlob = false;
+            let blobStart = -1;
+            const threshold = Math.max(2, Math.floor(rowHeight * 0.05)); // 5%以上で黒と判定
+
+            for (let x = 0; x < maxScanX; x++) {
+              const isBlack = colBlackCount[x] > threshold;
+              if (isBlack && !inBlob) {
+                inBlob = true;
+                blobStart = x;
+              } else if (!isBlack && inBlob) {
+                inBlob = false;
+                const blobEnd = x;
+                
+                // ブロブの直後に一定の空白（ギャップ）があるか確認
+                let hasGap = true;
+                const gapSize = 12; // 3x拡大なので12px（元の約4px）以上の空白
+                if (blobEnd + gapSize < maxScanX) {
+                  for (let gx = blobEnd; gx < blobEnd + gapSize; gx++) {
+                    if (colBlackCount[gx] > threshold) {
+                      hasGap = false;
+                      break;
+                    }
+                  }
+                } else {
+                  hasGap = false;
+                }
+
+                // 幅が小さく（10〜65px）、直後にギャップがあり、
+                // かつ開始位置が左側（x < 110）にある独立したブロブ（アイコン）を消去
+                const blobWidth = blobEnd - blobStart;
+                if (hasGap && blobWidth >= 10 && blobWidth <= 65 && blobStart < 110) {
+                  for (let eraseX = Math.max(0, blobStart - 2); eraseX < Math.min(canvas.width, blobEnd + 2); eraseX++) {
+                    for (let y = yStart; y < yEnd; y++) {
+                      const idx = (y * canvas.width + eraseX) * 4;
+                      data[idx] = 255;     // R
+                      data[idx + 1] = 255; // G
+                      data[idx + 2] = 255; // B
+                    }
+                  }
+                }
+              }
+            }
+          }
+
           ctx.putImageData(imgData, 0, 0);
 
           // PNG形式でBase64書き出し
@@ -139,8 +211,9 @@ export default function Home() {
     }
   }, [tesseractReady]);
 
-  const processImageFile = async () => {
-    if (!imageFile && !imagePath) {
+  const processImageFile = async (passedFile?: File) => {
+    const activeFile = passedFile || imageFile;
+    if (!activeFile && !imagePath) {
       addDebugLog('エラー: 画像ファイルが設定されていません', 'error');
       return;
     }
@@ -158,11 +231,11 @@ export default function Home() {
       let base64Image: string;
       let fileName: string;
 
-      if (imageFile) {
+      if (activeFile) {
         // ファイルがある場合はFormDataで送信
-        addDebugLog(`ファイルアップロード: ${imageFile.name}`, 'info');
+        addDebugLog(`ファイルアップロード: ${activeFile.name}`, 'info');
         const formData = new FormData();
-        formData.append('file', imageFile);
+        formData.append('file', activeFile);
 
         const response = await fetch('/api/process-image', {
           method: 'POST',
@@ -226,6 +299,9 @@ export default function Home() {
               console.log(`OCR Progress: ${percent}%`);
             }
           },
+          parameters: {
+            tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-|',
+          },
         }
       );
 
@@ -281,8 +357,8 @@ export default function Home() {
       setImageFile(file);
       setImagePath(file.name);
       addDebugLog(`ファイル選択: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`, 'info');
-      // ファイル選択後に自動処理
-      setTimeout(() => processImageFile(), 100);
+      // ファイルオブジェクトを直接渡して即座に処理を開始
+      processImageFile(file);
     }
   };
 
@@ -317,8 +393,8 @@ export default function Home() {
         setImageFile(file);
         setImagePath(file.name);
         addDebugLog(`ドロップ: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`, 'info');
-        // ファイルドロップ後に自動処理
-        setTimeout(() => processImageFile(), 100);
+        // ファイルオブジェクトを直接渡して即座に処理を開始
+        processImageFile(file);
       }
     }
   };
@@ -414,7 +490,7 @@ export default function Home() {
               </label>
 
               <button
-                onClick={processImageFile}
+                onClick={() => processImageFile()}
                 disabled={isLoading}
                 className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
               >
