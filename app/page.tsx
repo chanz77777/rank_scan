@@ -39,7 +39,7 @@ export default function Home() {
   };
 
   // 画像からスコアボードのプレイヤー名列部分（中央の特定エリア）を切り抜く
-  const cropImageToCenterGrid = (base64Str: string): Promise<string> => {
+  const cropImageToCenterGrid = (base64Str: string, mimeType: string = 'image/png'): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -171,7 +171,7 @@ export default function Home() {
         }
       };
       img.onerror = (err) => reject(new Error('Failed to load image for cropping'));
-      img.src = `data:image/png;base64,${base64Str}`;
+      img.src = `data:${mimeType};base64,${base64Str}`;
     });
   };
 
@@ -228,25 +228,41 @@ export default function Home() {
     try {
       let base64Image: string;
       let fileName: string;
+      let activeMimeType = 'image/png'; // デフォルト
 
       if (activeFile) {
-        // ファイルがある場合はFormDataで送信
-        addDebugLog(`ファイルアップロード: ${activeFile.name}`, 'info');
-        const formData = new FormData();
-        formData.append('file', activeFile);
-
-        const response = await fetch('/api/process-image', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+        // クライアント側でファイルをBase64に変換（Vercelの4.5MB制限を回避）
+        addDebugLog(`クライアント側でBase64に変換中: ${activeFile.name}`, 'info');
+        
+        let fileMime = activeFile.type;
+        if (!fileMime) {
+          const ext = activeFile.name.split('.').pop()?.toLowerCase();
+          if (ext === 'jxr') {
+            fileMime = 'image/jxr';
+          } else if (ext === 'png') {
+            fileMime = 'image/png';
+          } else if (ext === 'webp') {
+            fileMime = 'image/webp';
+          } else if (ext === 'jpg' || ext === 'jpeg') {
+            fileMime = 'image/jpeg';
+          }
+        }
+        if (fileMime) {
+          activeMimeType = fileMime;
         }
 
-        const data = await response.json();
-        base64Image = data.base64Image;
-        fileName = data.fileName;
+        base64Image = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            const base64 = result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = () => reject(new Error('Failed to read file on the client'));
+          reader.readAsDataURL(activeFile);
+        });
+        
+        fileName = activeFile.name;
       } else {
         // ファイルパスを使用する場合
         addDebugLog(`ファイルパス処理: ${imagePath}`, 'info');
@@ -266,16 +282,30 @@ export default function Home() {
         const data = await response.json();
         base64Image = data.base64Image;
         fileName = data.fileName;
+
+        // 拡張子から MIME タイプを判定
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (ext === 'jxr') {
+          activeMimeType = 'image/jxr';
+        } else if (ext === 'png') {
+          activeMimeType = 'image/png';
+        } else if (ext === 'webp') {
+          activeMimeType = 'image/webp';
+        } else if (ext === 'jpg' || ext === 'jpeg') {
+          activeMimeType = 'image/jpeg';
+        }
       }
 
       addDebugLog(`✓ Base64変換完了 (${(base64Image.length / 1024).toFixed(1)}KB)`, 'success');
 
       let ocrInputBase64 = base64Image;
+      let ocrInputMimeType = activeMimeType;
       if (autoCrop) {
         try {
           addDebugLog('✂️ スコアボードID部分を自動切り抜き中...', 'info');
-          const cropped = await cropImageToCenterGrid(base64Image);
+          const cropped = await cropImageToCenterGrid(base64Image, activeMimeType);
           ocrInputBase64 = cropped;
+          ocrInputMimeType = 'image/png'; // 切り抜き結果は常に PNG
           setCroppedImage(cropped);
           addDebugLog('✓ 切り抜き成功', 'success');
         } catch (cropErr: any) {
@@ -288,7 +318,7 @@ export default function Home() {
       const Tesseract = (window as any).Tesseract;
 
       const result = await Tesseract.recognize(
-        `data:image/png;base64,${ocrInputBase64}`,
+        `data:${ocrInputMimeType};base64,${ocrInputBase64}`,
         'eng',
         {
           logger: (m: any) => {
