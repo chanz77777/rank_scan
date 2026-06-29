@@ -56,11 +56,11 @@ export default function Home() {
 
           // スコアボードのプレイヤー名列の切り抜き範囲比率
           // 名前の先頭（左端）が切れず、かつ右端のランクアイコンや境界線が入らないよう調整
-          // 横: 32.5% 〜 46.5% (幅 14.0%)
+          // 横: 29.0% 〜 46.0% (幅 17.0%)
           // 縦: 29% 〜 80% (高さ 51%)
-          const cropX = Math.round(width * 0.325);
+          const cropX = Math.round(width * 0.29);
           const cropY = Math.round(height * 0.29);
-          const cropW = Math.round(width * 0.14);
+          const cropW = Math.round(width * 0.17);
           const cropH = Math.round(height * 0.51);
 
           // Tesseractの認識精度向上のため、4倍に拡大する
@@ -105,8 +105,8 @@ export default function Home() {
           const maxScanX = Math.round(canvas.width * 0.30);
           // 列が「黒い」とみなす最小黒ピクセル数（行高の4%以上で黒判定）
           const colBlackThreshold = Math.max(1, Math.floor(rowHeight * 0.04));
-          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約3〜4px相当)
-          const whiteGapMinWidth = 12;
+          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約8px相当)
+          const whiteGapMinWidth = 32;
 
           for (let row = 0; row < rowCount; row++) {
             const yStart = row * rowHeight;
@@ -391,12 +391,18 @@ export default function Home() {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      setImagePath(file.name);
-      addDebugLog(`ファイル選択: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`, 'info');
-      // ファイルオブジェクトを直接渡して即座に処理を開始
-      processImageFile(file);
+    if (file) {
+      if (file.name.toLowerCase().endsWith('.jxr')) {
+        addDebugLog(`⚠️ JXR形式のファイル (${file.name}) はブラウザおよびOCRエンジンで直接サポートされていません。PNGまたはJPEG形式に変換してからアップロードしてください。`, 'error');
+        return;
+      }
+      if (file.type.startsWith('image/')) {
+        setImageFile(file);
+        setImagePath(file.name);
+        addDebugLog(`ファイル選択: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`, 'info');
+        // ファイルオブジェクトを直接渡して即座に処理を開始
+        processImageFile(file);
+      }
     }
   };
 
@@ -427,6 +433,10 @@ export default function Home() {
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
+      if (file.name.toLowerCase().endsWith('.jxr')) {
+        addDebugLog(`⚠️ JXR形式のファイル (${file.name}) はブラウザおよびOCRエンジンで直接サポートされていません。PNGまたはJPEG形式に変換してからアップロードしてください。`, 'error');
+        return;
+      }
       if (file.type.startsWith('image/')) {
         setImageFile(file);
         setImagePath(file.name);
