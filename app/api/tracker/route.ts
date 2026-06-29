@@ -149,6 +149,41 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   };
 }
 
+/**
+ * OCRの誤読パターンに基づき、候補IDのリストを生成する。
+ * 例: ll→11, 1→l, I→l, a→4, 4→a, 先頭l→I 等
+ */
+function getOcrCandidates(id: string): string[] {
+  const candidates = new Set<string>();
+
+  // ll → 11（末尾の数字誤読）
+  if (id.includes('ll')) candidates.add(id.replace(/ll/g, '11'));
+  // 11 → ll
+  if (id.includes('11')) candidates.add(id.replace(/11/g, 'll'));
+  // 先頭 l → I（小文字エル → 大文字アイ）
+  if (id.startsWith('l')) candidates.add('I' + id.slice(1));
+  // 先頭 I → l
+  if (id.startsWith('I')) candidates.add('l' + id.slice(1));
+  // a → 4
+  if (id.includes('a')) candidates.add(id.replace(/a/g, '4'));
+  // 4 → a
+  if (id.includes('4')) candidates.add(id.replace(/4/g, 'a'));
+  // 1 → l（数字イチ → 小文字エル）
+  if (id.includes('1')) candidates.add(id.replace(/1/g, 'l'));
+  // l → 1
+  if (id.includes('l')) candidates.add(id.replace(/l/g, '1'));
+  // _ → -
+  if (id.includes('_')) candidates.add(id.replace(/_/g, '-'));
+  // - → _
+  if (id.includes('-')) candidates.add(id.replace(/-/g, '_'));
+  // W_ プレフィックス除去（アイコン誤読）
+  if (id.startsWith('W_')) candidates.add(id.slice(2));
+
+  // 元のIDは除外して返す
+  candidates.delete(id);
+  return Array.from(candidates);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const ubiId = request.nextUrl.searchParams.get('ubiId');
@@ -160,7 +195,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const json = await fetchWithCurl(ubiId);
+    // まず元のIDで検索
+    let json = await fetchWithCurl(ubiId);
+    let resolvedId = ubiId;
+
+    // 404の場合はOCR補正候補でリトライ
+    if (!json || !json.data) {
+      const candidates = getOcrCandidates(ubiId);
+      for (const candidate of candidates) {
+        console.log(`Retrying with OCR candidate: "${candidate}" (original: "${ubiId}")`);
+        const retryJson = await fetchWithCurl(candidate);
+        if (retryJson && retryJson.data) {
+          json = retryJson;
+          resolvedId = candidate;
+          console.log(`OCR correction succeeded: "${ubiId}" → "${candidate}"`);
+          break;
+        }
+      }
+    }
 
     if (!json || !json.data) {
       return NextResponse.json(
@@ -169,7 +221,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const playerStats = parseTrackerResponse(ubiId, json);
+    const playerStats = parseTrackerResponse(resolvedId, json);
     return NextResponse.json(playerStats);
   } catch (error) {
     console.error('API Error:', error);

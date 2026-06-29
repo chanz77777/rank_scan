@@ -94,19 +94,20 @@ export default function Home() {
           }
 
           // ============================================================
-          // 炎/Ubisoft swirlアイコンの自動除去処理（左マージン消去方式）
+          // 炎/Ubisoft swirlアイコンの自動除去処理（最右ギャップ検出方式）
           // ============================================================
-          // 各行について「最初に連続した白の空白ギャップが現れる位置まで」を
-          // 丸ごと白で塗りつぶす。これにより炎/スワールなどの左端アイコンを
-          // 形状に依存せず確実に除去できる。
+          // 各行について左端からスキャンし、「黒い塊の後に白いギャップ」が
+          // 現れるたびに eraseUpTo を更新し続ける（break しない）。
+          // これにより「アバター → フレイム → 渦巻き → ユーザー名」と並んでいる
+          // 場合でも、名前直前の最右ギャップを検出してアイコン全体を消去できる。
           const rowCount = 10;
           const rowHeight = Math.floor(canvas.height / rowCount);
-          // 左端からどこまでスキャンするか（プレイヤー名の先頭が入らない幅）
-          const maxScanX = Math.round(canvas.width * 0.30);
+          // 左端からどこまでスキャンするか（アイコン群が収まる幅、名前は含まない）
+          const maxScanX = Math.round(canvas.width * 0.35);
           // 列が「黒い」とみなす最小黒ピクセル数（行高の4%以上で黒判定）
           const colBlackThreshold = Math.max(1, Math.floor(rowHeight * 0.04));
-          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約5px相当)
-          const whiteGapMinWidth = 20;
+          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約3px相当)
+          const whiteGapMinWidth = 12;
 
           for (let row = 0; row < rowCount; row++) {
             const yStart = row * rowHeight;
@@ -125,8 +126,8 @@ export default function Home() {
               colBlackCount[x] = cnt;
             }
 
-            // 左端から右へ走査し、「黒い列が1つ以上あった後に
-            // whiteGapMinWidth 以上の連続白列が来た位置」を探す
+            // 左端から右へ走査し、「黒い塊の後のギャップ」を見つけるたびに
+            // eraseUpTo を更新する（break しない → 最右ギャップを検出）
             let foundBlack = false;
             let eraseUpTo = 0; // この列まで（含まない）を白に塗る
             let whiteRun = 0;
@@ -140,9 +141,9 @@ export default function Home() {
                 if (foundBlack) {
                   whiteRun++;
                   if (whiteRun >= whiteGapMinWidth) {
-                    // ギャップが見つかった：ギャップの開始位置（アイコン末尾+1）まで消去
+                    // ギャップ確定: eraseUpTo を更新して走査を続ける
+                    // (break しない → フレイムなど複数アイコンも対応)
                     eraseUpTo = x - whiteGapMinWidth + 1;
-                    break;
                   }
                 }
               }
