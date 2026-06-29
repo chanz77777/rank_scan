@@ -105,8 +105,8 @@ export default function Home() {
           const maxScanX = Math.round(canvas.width * 0.30);
           // 列が「黒い」とみなす最小黒ピクセル数（行高の4%以上で黒判定）
           const colBlackThreshold = Math.max(1, Math.floor(rowHeight * 0.04));
-          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約8px相当)
-          const whiteGapMinWidth = 32;
+          // 「白の空白ギャップ」とみなす最小連続白列数 (4x拡大で約5px相当)
+          const whiteGapMinWidth = 20;
 
           for (let row = 0; row < rowCount; row++) {
             const yStart = row * rowHeight;

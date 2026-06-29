@@ -47,7 +47,7 @@ async function fetchWithCurl(ubiId: string): Promise<TrackerResponse | null> {
   const url = `${TRACKER_API}/${encodeURIComponent(ubiId)}`;
 
   const curlCmd = [
-    'curl.exe',
+    'curl',
     '-s',                                         // サイレントモード
     '--max-time', '15',                            // タイムアウト15秒
     '--compressed',                                // gzip対応
