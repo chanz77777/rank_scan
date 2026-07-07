@@ -25,7 +25,7 @@ export default function Home() {
   const [extractedPlayerIds, setExtractedPlayerIds] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [tesseractReady, setTesseractReady] = useState(false);
-
+  const [autoCrop, setAutoCrop] = useState(true);
   const [statusMsg, setStatusMsg] = useState<string>('');
 
   const addDebugLog = (message: string, _type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
@@ -33,8 +33,77 @@ export default function Home() {
   };
 
 
+  // 画像からスコアボードのプレイヤー名列部分（中央の特定エリア）を切り抜く
+  // アイコン除去は行わず、切り抜き＋二値化のみ実施
+  const cropImageToCenterGrid = (base64Str: string, mimeType: string = 'image/png'): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
 
-  // Tesseract.jsを読み込み
+          const width = img.naturalWidth;
+          const height = img.naturalHeight;
+
+          // スコアボードのプレイヤー名列の切り抜き範囲比率
+          // 名前の先頭（左端）が切れず、かつ右端のランクアイコンや境界線が入らないよう調整
+          // 横: 29.0% 〜 46.0% (幅 17.0%)
+          // 縦: 29% 〜 80% (高さ 51%)
+          const cropX = Math.round(width * 0.29);
+          const cropY = Math.round(height * 0.29);
+          const cropW = Math.round(width * 0.17);
+          const cropH = Math.round(height * 0.51);
+
+          // Tesseractの認識精度向上のため、4倍に拡大する
+          const scale = 4;
+          canvas.width = cropW * scale;
+          canvas.height = cropH * scale;
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+          // 画像処理（二値化・白黒反転）
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            // 輝度 (グレースケール)
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            // 二値化 & 白黒反転 (文字を黒[0]、背景を白[255]にする)
+            // 文字同士の癒着（特にGとドットなど）を防ぎ、文字を細めにして境界をくっきりさせるため、しきい値を 140 に設定
+            const binValue = gray > 140 ? 0 : 255;
+
+            data[i] = binValue;     // R
+            data[i + 1] = binValue; // G
+            data[i + 2] = binValue; // B
+          }
+
+          ctx.putImageData(imgData, 0, 0);
+
+          // PNG形式でBase64書き出し
+          const croppedBase64 = canvas.toDataURL('image/png').split(',')[1];
+          resolve(croppedBase64);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error('Failed to load image for cropping'));
+      img.src = `data:${mimeType};base64,${base64Str}`;
+    });
+  };
+
+
   useEffect(() => {
     const loadTesseract = async () => {
       try {
@@ -157,9 +226,19 @@ export default function Home() {
 
       addDebugLog(`✓ Base64変換完了 (${(base64Image.length / 1024).toFixed(1)}KB)`, 'success');
 
-      // 元画像をそのままOCRに渡す（切り抜き・モノクロ変換なし）
-      const ocrInputBase64 = base64Image;
-      const ocrInputMimeType = activeMimeType;
+      let ocrInputBase64 = base64Image;
+      let ocrInputMimeType = activeMimeType;
+      if (autoCrop) {
+        try {
+          addDebugLog('✂️ スコアボードID部分を自動切り抜き中...', 'info');
+          const cropped = await cropImageToCenterGrid(base64Image, activeMimeType);
+          ocrInputBase64 = cropped;
+          ocrInputMimeType = 'image/png'; // 切り抜き結果は常に PNG
+          addDebugLog('✓ 切り抜き成功', 'success');
+        } catch (cropErr: any) {
+          addDebugLog(`⚠️ 切り抜きに失敗しました (元画像で処理します): ${cropErr.message || cropErr}`, 'warning');
+        }
+      }
 
       // Tesseract.jsでOCR処理
       addDebugLog(`🔍 OCR処理開始 (英語のみ)...`, 'info');
@@ -345,7 +424,16 @@ export default function Home() {
                   📂 ファイルを選択
                 </span>
               </label>
-
+              {/* 切り抜きトグル */}
+              <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={autoCrop}
+                  onChange={(e) => setAutoCrop(e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                自動切り抜き
+              </label>
             </div>
           </div>
         </div>
