@@ -81,8 +81,9 @@ export default function Home() {
             const gray = 0.299 * r + 0.587 * g + 0.114 * b;
 
             // 二値化 & 白黒反転 (文字を黒[0]、背景を白[255]にする)
-            // 文字同士の癒着（特にGとドットなど）を防ぎ、文字を細めにして境界をくっきりさせるため、しきい値を 140 に設定
-            const binValue = gray > 140 ? 0 : 255;
+            // しきい値を100に設定: グレーアウト文字（切断プレイヤー等）も捕捉できるよう
+            // 140だと輝度100-140の文字が白飛びして認識されない
+            const binValue = gray > 100 ? 0 : 255;
 
             data[i] = binValue;     // R
             data[i + 1] = binValue; // G
@@ -256,6 +257,8 @@ export default function Home() {
           },
           parameters: {
             tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-|',
+            // 単一カラムの可変サイズテキストとして解析（スコアボードの名前列に最適）
+            tessedit_pageseg_mode: '4',
           },
         }
       );

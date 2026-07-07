@@ -152,37 +152,85 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
 
 /**
  * OCRの誤読パターンに基づき、候補IDのリストを生成する。
- * 例: ll→11, 1→l, I→l, a→4, 4→a, 先頭l→I 等
+ * 大文字小文字は維持しつつ、フォント混同文字(1, l, I, |)および(o, O, 0)を賢く置換してリトライ用の候補リストを最大20件程度作成する。
  */
 function getOcrCandidates(id: string): string[] {
-  const candidates = new Set<string>();
+  const candidatesSet = new Set<string>();
 
-  // ll → 11（末尾の数字誤読）
-  if (id.includes('ll')) candidates.add(id.replace(/ll/g, '11'));
-  // 11 → ll
-  if (id.includes('11')) candidates.add(id.replace(/11/g, 'll'));
-  // 先頭 l → I（小文字エル → 大文字アイ）
-  if (id.startsWith('l')) candidates.add('I' + id.slice(1));
-  // 先頭 I → l
-  if (id.startsWith('I')) candidates.add('l' + id.slice(1));
-  // a → 4
-  if (id.includes('a')) candidates.add(id.replace(/a/g, '4'));
-  // 4 → a
-  if (id.includes('4')) candidates.add(id.replace(/4/g, 'a'));
-  // 1 → l（数字イチ → 小文字エル）
-  if (id.includes('1')) candidates.add(id.replace(/1/g, 'l'));
-  // l → 1
-  if (id.includes('l')) candidates.add(id.replace(/l/g, '1'));
-  // _ → -
-  if (id.includes('_')) candidates.add(id.replace(/_/g, '-'));
-  // - → _
-  if (id.includes('-')) candidates.add(id.replace(/-/g, '_'));
-  // W_ プレフィックス除去（アイコン誤読）
-  if (id.startsWith('W_')) candidates.add(id.slice(2));
+  // 基本的な相互置換テーブル
+  // 1, l, I, | の相互置換グループ
+  const simL = ['1', 'l', 'I', '|'];
+  // o, O, 0 の相互置換グループ
+  const simO = ['o', 'O', '0'];
+
+  // 1. まず単純な一括置換候補を生成
+  // _ と - の相互置換
+  if (id.includes('_')) candidatesSet.add(id.replace(/_/g, '-'));
+  if (id.includes('-')) candidatesSet.add(id.replace(/-/g, '_'));
+
+  // プレフィックスの誤読除去
+  if (id.startsWith('W_')) candidatesSet.add(id.slice(2));
+  if (id.startsWith('w_')) candidatesSet.add(id.slice(2));
+
+  // 2. 文字列の各文字をスキャンして置換候補を作成する
+  // 組み合わせ数が爆発するのを防ぐため、最大3箇所の変更に制限して実用的な候補を生成する。
+  const chars = id.split('');
+  
+  // 置換可能な文字のインデックスと、その代替文字候補のリストを抽出
+  const targets: { index: number; options: string[] }[] = [];
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    if (simL.includes(char)) {
+      targets.push({
+        index: i,
+        options: simL.filter(c => c !== char)
+      });
+    } else if (simO.includes(char)) {
+      targets.push({
+        index: i,
+        options: simO.filter(c => c !== char)
+      });
+    }
+  }
+
+  // もし置換対象文字が見つかったら、組み合わせを生成
+  if (targets.length > 0) {
+    // 置換対象が多すぎる場合は先頭側の3つに絞る
+    const activeTargets = targets.slice(0, 3);
+    
+    // バックトラック的に組み合わせを再帰生成
+    function generate(targetIdx: number, currentChars: string[]) {
+      if (targetIdx === activeTargets.length) {
+        candidatesSet.add(currentChars.join(''));
+        return;
+      }
+      
+      const { index, options } = activeTargets[targetIdx];
+      // 変更しないパターン
+      generate(targetIdx + 1, [...currentChars]);
+      
+      // 変更するパターン
+      for (const opt of options) {
+        const nextChars = [...currentChars];
+        nextChars[index] = opt;
+        generate(targetIdx + 1, nextChars);
+      }
+    }
+    
+    generate(0, chars);
+  }
 
   // 元のIDは除外して返す
-  candidates.delete(id);
-  return Array.from(candidates);
+  candidatesSet.delete(id);
+  
+  // 優先順位をつける（変更箇所が少ないものを手前に、実用性の高いものを優先）
+  const result = Array.from(candidatesSet);
+  
+  // デバッグ用にコンソール出力
+  console.log(`Generated ${result.length} OCR correction candidates for: "${id}"`, result);
+  
+  // APIへの過剰な負荷を避けるため、最大15件に制限して返す
+  return result.slice(0, 15);
 }
 
 export async function GET(request: NextRequest) {
