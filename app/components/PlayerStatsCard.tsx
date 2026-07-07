@@ -30,8 +30,19 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
 
   return (
     <div className="w-full bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg border border-slate-700 shadow-xl overflow-hidden hover:border-slate-500 hover:shadow-2xl transition-all duration-200 flex flex-col">
-      {/* ヘッダー: プレイヤー名 */}
-      <div className="bg-gradient-to-r from-blue-900/80 to-purple-900/80 px-3 py-2 border-b border-slate-700">
+      {/* ヘッダー: プレイヤー名（アバター背景） */}
+      <div
+        className="relative px-3 py-2 border-b border-slate-700 overflow-hidden"
+        style={
+          stats.avatarUrl
+            ? {
+                backgroundImage: `linear-gradient(to right, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.55) 60%, rgba(15,23,42,0.2) 100%), url(${stats.avatarUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center top',
+              }
+            : { background: 'linear-gradient(to right, #1e3a5f, #3b1f6b)' }
+        }
+      >
         <a
           href={trackerUrl}
           target="_blank"
@@ -39,14 +50,14 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           className="group flex items-center gap-1"
           title="tracker.gg で開く"
         >
-          <h2 className="text-sm font-bold text-white truncate group-hover:text-blue-300 transition-colors" title={username}>
+          <h2 className="text-sm font-bold text-white truncate group-hover:text-blue-300 transition-colors drop-shadow" title={username}>
             {username}
           </h2>
-          <svg className="w-3 h-3 text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3 h-3 text-slate-400 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
         </a>
-        <p className="text-xs text-slate-400 mt-0.5">Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
+        <p className="text-xs text-slate-300 mt-0.5 drop-shadow">Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
       </div>
 
       {/* シーズンスタッツ */}

@@ -130,6 +130,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   return {
     ubiId,
     username,
+    avatarUrl: platformInfo.avatarUrl ?? undefined,
     currentSeason: {
       title: seasonShortName,
       winRate: parseFloat(seasonWinPct.toFixed(1)),
