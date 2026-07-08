@@ -526,7 +526,7 @@ export default function Home() {
         )}
 
         {/* プレイヤーカード */}
-        <div className="max-w-screen-2xl mx-auto">
+        <div className="max-w-full px-8 mx-auto">
           {allies.length + enemies.length === 0 ? (
             <div className="text-center py-24">
               {isLoading ? (
@@ -551,7 +551,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
                     味方チーム ({allies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                     {allies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
@@ -575,7 +575,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-red-400"></span>
                     敵チーム ({enemies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                     {enemies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
