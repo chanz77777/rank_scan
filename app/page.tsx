@@ -170,7 +170,7 @@ export default function Home() {
       if (activeFile) {
         // クライアント側でファイルをBase64に変換（Vercelの4.5MB制限を回避）
         addDebugLog(`クライアント側でBase64に変換中: ${activeFile.name}`, 'info');
-        
+
         let fileMime = activeFile.type;
         if (!fileMime) {
           const ext = activeFile.name.split('.').pop()?.toLowerCase();
@@ -198,7 +198,7 @@ export default function Home() {
           reader.onerror = () => reject(new Error('Failed to read file on the client'));
           reader.readAsDataURL(activeFile);
         });
-        
+
         fileName = activeFile.name;
       } else {
         // ファイルパスを使用する場合
@@ -575,7 +575,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-red-400"></span>
                     敵チーム ({enemies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                     {enemies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
