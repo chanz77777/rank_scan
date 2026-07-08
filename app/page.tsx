@@ -18,6 +18,8 @@ declare global {
 export default function Home() {
   const [allies, setAllies] = useState<PlayerStats[]>([]);
   const [enemies, setEnemies] = useState<PlayerStats[]>([]);
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
   const [imagePath, setImagePath] = useState(DEFAULT_IMAGE_PATH);
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -106,6 +108,12 @@ export default function Home() {
 
 
   useEffect(() => {
+    // ローカルストレージからAPIキーを読み込む
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      setGeminiApiKey(savedKey);
+    }
+
     const loadTesseract = async () => {
       try {
         // CDNからTesseract.jsを読み込み
@@ -145,7 +153,7 @@ export default function Home() {
       return;
     }
 
-    if (!tesseractReady) {
+    if (!tesseractReady && !geminiApiKey) {
       addDebugLog('⚠️ Tesseract.jsを読み込み中です。お待ちください...', 'warning');
       return;
     }
@@ -241,30 +249,57 @@ export default function Home() {
         }
       }
 
-      // Tesseract.jsでOCR処理
-      addDebugLog(`🔍 OCR処理開始 (英語のみ)...`, 'info');
-      const Tesseract = (window as any).Tesseract;
+      let extractedText = '';
 
-      const result = await Tesseract.recognize(
-        `data:${ocrInputMimeType};base64,${ocrInputBase64}`,
-        'eng',
-        {
-          logger: (m: any) => {
-            if (m.status === 'recognizing text') {
-              const percent = Math.round(m.progress * 100);
-              console.log(`OCR Progress: ${percent}%`);
-            }
+      if (geminiApiKey) {
+        // Gemini OCRで処理
+        addDebugLog(`🔍 Gemini OCR 処理開始...`, 'info');
+        const ocrResponse = await fetch('/api/ocr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          parameters: {
-            tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-|',
-            // 単一カラムの可変サイズテキストとして解析（スコアボードの名前列に最適）
-            tessedit_pageseg_mode: '4',
-          },
+          body: JSON.stringify({
+            image: ocrInputBase64,
+            mimeType: ocrInputMimeType,
+            apiKey: geminiApiKey,
+          }),
+        });
+
+        if (!ocrResponse.ok) {
+          const errData = await ocrResponse.json();
+          throw new Error(errData.details || errData.error || 'Gemini OCR failed');
         }
-      );
 
-      const extractedText = result.data.text;
-      addDebugLog(`✓ OCR完了 (${extractedText.length}文字)`, 'success');
+        const ocrData = await ocrResponse.json();
+        extractedText = ocrData.text;
+        addDebugLog(`✓ Gemini OCR 完了 (${extractedText.length}文字)`, 'success');
+      } else {
+        // Tesseract.jsでOCR処理
+        addDebugLog(`🔍 OCR処理開始 (英語のみ)...`, 'info');
+        const Tesseract = (window as any).Tesseract;
+
+        const result = await Tesseract.recognize(
+          `data:${ocrInputMimeType};base64,${ocrInputBase64}`,
+          'eng',
+          {
+            logger: (m: any) => {
+              if (m.status === 'recognizing text') {
+                const percent = Math.round(m.progress * 100);
+                console.log(`OCR Progress: ${percent}%`);
+              }
+            },
+            parameters: {
+              tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-|',
+              // 単一カラムの可変サイズテキストとして解析（スコアボードの名前列に最適）
+              tessedit_pageseg_mode: '4',
+            },
+          }
+        );
+
+        extractedText = result.data.text;
+        addDebugLog(`✓ OCR完了 (${extractedText.length}文字)`, 'success');
+      }
 
       // テキストからプレイヤーIDを抽出
       const playerIds = parsePlayerIdsFromText(extractedText);
@@ -411,6 +446,30 @@ export default function Home() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Gemini API Key 入力欄 */}
+              <div className="relative flex items-center bg-slate-800/85 border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition-all duration-200 shadow-inner">
+                <span className="text-xs text-slate-400 mr-2 font-semibold select-none">Gemini API:</span>
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  placeholder="APIキーを入力..."
+                  value={geminiApiKey}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setGeminiApiKey(val);
+                    localStorage.setItem('gemini_api_key', val);
+                  }}
+                  className="bg-transparent border-none text-white text-xs outline-none w-32 focus:ring-0 placeholder-slate-600 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="text-slate-500 hover:text-slate-300 ml-1.5 focus:outline-none text-xs"
+                  title={showApiKey ? '非表示' : '表示'}
+                >
+                  {showApiKey ? '🙈' : '👁️'}
+                </button>
+              </div>
+
               {/* ファイル選択ボタン */}
               <label className="relative cursor-pointer">
                 <input
