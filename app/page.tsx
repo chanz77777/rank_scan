@@ -551,7 +551,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
                     味方チーム ({allies.length}人)
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {allies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
@@ -575,7 +575,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-red-400"></span>
                     敵チーム ({enemies.length}人)
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {enemies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />

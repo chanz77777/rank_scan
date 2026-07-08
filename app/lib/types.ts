@@ -37,6 +37,7 @@ export interface PlayerStats {
   ubiId: string; // Ubisoft ID（URLのパラメータ）
   username: string; // プレイヤー名
   avatarUrl?: string; // アバター画像URL（R6 Tracker より）
+  heroImageUrl?: string; // ヘッダーバナー画像URL
   currentSeason: SeasonStats;
   lifetimeStats: LifetimeStats;
   seasonPeaks: SeasonPeak[];

@@ -88,10 +88,12 @@ async function fetchWithCurl(ubiId: string): Promise<TrackerResponse | null> {
 
 function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats {
   const { platformInfo, metadata, segments } = json.data;
+  const userInfo = (json.data as any).userInfo;
 
   const username = platformInfo.platformUserHandle ?? ubiId;
   const level = metadata.clearanceLevel ?? 0;
   const currentSeasonId = metadata.currentSeason;
+  const heroImageUrl = userInfo?.customHeroUrl ?? undefined;
 
   // overview セグメント（全体戦績）
   const overviewSeg = segments.find((s) => s.type === 'overview');
@@ -114,7 +116,6 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   const seasonWins = currentSeasonSeg?.stats?.matchesWon?.value ?? 0;
   const seasonLosses = currentSeasonSeg?.stats?.matchesLost?.value ?? 0;
   const seasonWinPct = currentSeasonSeg?.stats?.winPercentage?.value ?? 0;
-  // kdRatio が直接提供されていればそれを使う、なければ kills/deaths で計算
   const seasonKdRaw = currentSeasonSeg?.stats?.kdRatio?.value;
   const seasonKills = currentSeasonSeg?.stats?.kills?.value ?? 0;
   const seasonDeaths = currentSeasonSeg?.stats?.deaths?.value ?? 1;
@@ -122,15 +123,58 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     ? parseFloat(seasonKdRaw.toFixed(2))
     : (seasonDeaths > 0 ? parseFloat((seasonKills / seasonDeaths).toFixed(2)) : 0);
 
-  // ランク情報を探す（seasonSegのstats.rankなど）
-  const rankStat = currentSeasonSeg?.stats?.['rank'];
-  const rankMeta = rankStat?.metadata as { tierName?: string } | undefined;
-  const rankName = rankMeta?.tierName ?? '';
+  // 現在シーズンのランク情報を探す
+  const currentRankPointsStat = currentSeasonSeg?.stats?.['rankPoints'] || currentSeasonSeg?.stats?.['rank'] || currentSeasonSeg?.stats?.['mmr'];
+  const currentRankMeta = currentRankPointsStat?.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
+  const currentRankName = currentRankMeta?.name || currentRankMeta?.tierName || '';
+  const currentRankImg = currentRankMeta?.imageUrl || '';
+  const currentRankVal = currentRankPointsStat?.value ?? 0;
+
+  // 過去最高ランクの探索
+  let bestRankName = currentRankName;
+  let bestRankImg = currentRankImg;
+  let bestValue = currentRankVal;
+  let bestSeasonName = seasonShortName;
+
+  const rankedSeasons = segments.filter(
+    (s) => s.type === 'season' && s.attributes?.sessionType === 'ranked'
+  );
+
+  for (const s of rankedSeasons) {
+    const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
+    if (stat) {
+      const val = stat.value ?? 0;
+      const meta = stat.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
+      const rName = meta?.name || meta?.tierName || '';
+      
+      if (val > bestValue && rName) {
+        bestValue = val;
+        bestRankName = rName;
+        bestRankImg = meta?.imageUrl || '';
+        bestSeasonName = s.metadata?.shortName as string ?? `S${s.attributes?.season}`;
+      }
+    }
+  }
+
+  const peaks = [];
+  if (currentRankName) {
+    peaks.push({
+      season: seasonShortName,
+      rank: { rank: currentRankName, mmr: Math.round(currentRankVal), imageUrl: currentRankImg }
+    });
+  }
+  if (bestRankName) {
+    peaks.push({
+      season: bestSeasonName,
+      rank: { rank: bestRankName, mmr: Math.round(bestValue), imageUrl: bestRankImg }
+    });
+  }
 
   return {
     ubiId,
     username,
     avatarUrl: platformInfo.avatarUrl ?? undefined,
+    heroImageUrl,
     currentSeason: {
       title: seasonShortName,
       winRate: parseFloat(seasonWinPct.toFixed(1)),
@@ -144,9 +188,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
       matches: Math.round(totalMatches),
       timePlayed: timePlayedDisplay,
     },
-    seasonPeaks: rankName
-      ? [{ season: seasonShortName, rank: { rank: rankName, mmr: 0 } }]
-      : [],
+    seasonPeaks: peaks,
   };
 }
 

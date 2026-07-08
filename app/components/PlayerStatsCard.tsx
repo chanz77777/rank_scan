@@ -25,96 +25,107 @@ const getWrColor = (wr: number): string => {
 };
 
 export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
-  const { ubiId, username, currentSeason, lifetimeStats } = stats;
+  const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks } = stats;
   const trackerUrl = `https://r6.tracker.network/r6siege/profile/ubi/${encodeURIComponent(ubiId)}/overview`;
 
+  const currentRankInfo = seasonPeaks[0]?.rank;
+  const bestRankInfo = seasonPeaks[1]?.rank || seasonPeaks[0]?.rank;
+  const bestSeasonName = seasonPeaks[1]?.season || seasonPeaks[0]?.season || '';
+
   return (
-    <div className="w-full bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg border border-slate-700 shadow-xl overflow-hidden hover:border-slate-500 hover:shadow-2xl transition-all duration-200 flex flex-col">
-      {/* ヘッダー: プレイヤー名（アバター背景） */}
-      <div
-        className="relative px-3 py-2 border-b border-slate-700 overflow-hidden"
-        style={
-          stats.avatarUrl
-            ? {
-                backgroundImage: `linear-gradient(to right, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.55) 60%, rgba(15,23,42,0.2) 100%), url(${stats.avatarUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center top',
-              }
-            : { background: 'linear-gradient(to right, #1e3a5f, #3b1f6b)' }
-        }
-      >
-        <a
-          href={trackerUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex items-center gap-1"
-          title="tracker.gg で開く"
-        >
-          <h2 className="text-sm font-bold text-white truncate group-hover:text-blue-300 transition-colors drop-shadow" title={username}>
-            {username}
-          </h2>
-          <svg className="w-3 h-3 text-slate-400 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-        <p className="text-xs text-slate-300 mt-0.5 drop-shadow">Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
-      </div>
-
-      {/* シーズンスタッツ */}
-      <div className="px-3 py-2 flex-1">
-        <p className="text-xs text-slate-500 uppercase tracking-wider mb-1.5 font-semibold">{currentSeason.title}</p>
-        <div className="grid grid-cols-3 gap-1.5">
-          {/* 勝率 */}
-          <div className="bg-slate-700/60 rounded p-1.5 text-center">
-            <p className={`text-base font-bold leading-tight ${getWrColor(currentSeason.winRate)}`}>
-              {currentSeason.winRate.toFixed(1)}%
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5 leading-none">Win%</p>
+    <div className="w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/80 shadow-2xl overflow-hidden hover:border-slate-500 hover:shadow-blue-900/10 transition-all duration-300 flex flex-row h-48 text-white relative">
+      {/* 左側: バナー画像 (証明写真風) */}
+      <div className="w-1/3 relative flex-shrink-0 border-r border-slate-800/80 bg-slate-950 overflow-hidden group">
+        {heroImageUrl ? (
+          <img
+            src={heroImageUrl}
+            alt={username}
+            className="w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center gap-1">
+            <span className="text-3xl">🎮</span>
+            <span className="text-[10px] text-slate-500 font-mono">No Custom Banner</span>
           </div>
-
-          {/* K/D */}
-          <div className="bg-slate-700/60 rounded p-1.5 text-center">
-            <p className={`text-base font-bold leading-tight ${getKdColor(currentSeason.kd)}`}>
-              {currentSeason.kd.toFixed(2)}
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5 leading-none">K/D</p>
-          </div>
-
-          {/* マッチ数 */}
-          <div className="bg-slate-700/60 rounded p-1.5 text-center">
-            <p className="text-base font-bold text-yellow-400 leading-tight">
-              {currentSeason.matches}
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5 leading-none">Games</p>
-          </div>
-        </div>
-
-        {/* 勝敗 */}
-        {currentSeason.wins != null && currentSeason.losses != null && (
-          <div className="mt-1.5 flex gap-1 text-xs">
-            <span className="flex-1 bg-green-900/40 text-green-400 rounded text-center py-0.5 font-semibold">
-              {currentSeason.wins}W
-            </span>
-            <span className="flex-1 bg-red-900/40 text-red-400 rounded text-center py-0.5 font-semibold">
-              {currentSeason.losses}L
-            </span>
+        )}
+        
+        {/* 現在のランクアイコンをバナー画像に重ねる（右下） */}
+        {currentRankInfo?.imageUrl && (
+          <div 
+            className="absolute bottom-2 right-2 w-11 h-11 bg-slate-950/85 rounded-full border border-slate-700/60 flex items-center justify-center backdrop-blur-sm p-1 shadow-lg" 
+            title={`Current Rank: ${currentRankInfo.rank}`}
+          >
+            <img src={currentRankInfo.imageUrl} alt={currentRankInfo.rank} className="w-full h-full object-contain" />
           </div>
         )}
       </div>
 
-      {/* フッター: lifetime マッチ数 */}
-      <div className="px-3 py-1.5 border-t border-slate-700/50 bg-slate-900/50">
-        <div className="flex justify-between items-center text-xs text-slate-500">
-          <span>Total: {lifetimeStats.matches.toLocaleString()} games</span>
+      {/* 右側: プレイヤー情報と戦績 */}
+      <div className="flex-1 p-3 flex flex-col justify-between overflow-hidden">
+        {/* 上段: 名前と基本情報 */}
+        <div>
           <a
             href={trackerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-400 transition-colors"
+            className="group flex items-center gap-1.5 w-fit"
+            title="tracker.gg で開く"
           >
-            tracker.gg ↗
+            <h2 className="text-sm font-extrabold tracking-wide truncate max-w-[120px] sm:max-w-[160px] group-hover:text-blue-300 transition-colors drop-shadow" title={username}>
+              {username}
+            </h2>
+            <svg className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
           </a>
+          <p className="text-[11px] text-slate-400 mt-0.5">Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
         </div>
+
+        {/* 中段: 今シーズンの戦績 */}
+        <div className="my-1.5">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[9px] text-slate-400 font-bold tracking-wider uppercase">{currentSeason.title}</span>
+            {currentRankInfo && (
+              <span className="text-[9px] text-slate-400 font-semibold truncate max-w-[100px]" title={currentRankInfo.rank}>
+                {currentRankInfo.rank}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 text-center">
+            <div className="bg-slate-800/50 border border-slate-700/30 rounded py-0.5 px-1">
+              <p className={`text-xs font-bold leading-tight ${getWrColor(currentSeason.winRate)}`}>{currentSeason.winRate.toFixed(1)}%</p>
+              <p className="text-[8px] text-slate-500 font-medium uppercase leading-none">Win%</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700/30 rounded py-0.5 px-1">
+              <p className={`text-xs font-bold leading-tight ${getKdColor(currentSeason.kd)}`}>{currentSeason.kd.toFixed(2)}</p>
+              <p className="text-[8px] text-slate-500 font-medium uppercase leading-none">K/D</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700/30 rounded py-0.5 px-1">
+              <p className="text-xs font-bold text-yellow-500/90 leading-tight">{currentSeason.matches}</p>
+              <p className="text-[8px] text-slate-500 font-medium uppercase leading-none">Games</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 下段: SEASON PEAKS (BEST ランク) */}
+        {bestRankInfo && (
+          <div className="border-t border-slate-800/80 pt-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {bestRankInfo.imageUrl && (
+                <img src={bestRankInfo.imageUrl} alt="Best Rank" className="w-6.5 h-6.5 object-contain flex-shrink-0" />
+              )}
+              <div className="min-w-0">
+                <p className="text-[8px] text-slate-500 font-bold uppercase leading-none">Best Peak</p>
+                <p className="text-[10px] text-white font-bold mt-0.5 truncate leading-none" title={bestRankInfo.rank}>
+                  {bestRankInfo.rank}
+                </p>
+              </div>
+            </div>
+            <span className="text-[8px] text-slate-500 font-mono italic flex-shrink-0" title={`Peak Season: ${bestSeasonName}`}>
+              {bestSeasonName}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
