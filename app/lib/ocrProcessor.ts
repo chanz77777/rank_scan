@@ -18,14 +18,14 @@ const ID_BLOCKLIST = new Set([
  * 例: "-_W_s0-UzoU.SPL" → "s0-UzoU.SPL"
  */
 function stripIconPrefix(str: string): string {
-  // ステップ1: 先頭の非英数字文字を除去 ("-_W_foo" → "W_foo")
-  let s = str.replace(/^[^A-Za-z0-9]+/, '');
-  // ステップ2: "1〜3文字英数字 + 区切り文字" が繰り返す先頭パターンを除去
-  //           ("W_foo" → "foo", "y_bar" → "bar", "Ab_cd_RealName" → "RealName" など)
-  s = s.replace(/^([A-Za-z0-9]{1,3}[_\-.]+)+/, '');
-  // ステップ3: 再度先頭の非英数字を除去
-  s = s.replace(/^[^A-Za-z0-9]+/, '');
-  return s;
+  // // ステップ1: 先頭の非英数字文字を除去 ("-_W_foo" → "W_foo")
+  // let s = str.replace(/^[^A-Za-z0-9]+/, '');
+  // // ステップ2: "1〜3文字英数字 + 区切り文字" が繰り返す先頭パターンを除去
+  // //           ("W_foo" → "foo", "y_bar" → "bar", "Ab_cd_RealName" → "RealName" など)
+  // s = s.replace(/^([A-Za-z0-9]{1,3}[_\-.]+)+/, '');
+  // // ステップ3: 再度先頭の非英数字を除去
+  // s = s.replace(/^[^A-Za-z0-9]+/, '');
+  return str;
 }
 
 /**
