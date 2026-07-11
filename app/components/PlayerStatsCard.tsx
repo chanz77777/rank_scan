@@ -29,7 +29,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   const trackerUrl = `https://r6.tracker.network/r6siege/profile/ubi/${encodeURIComponent(ubiId)}/overview`;
 
   const currentRankInfo = seasonPeaks[0]?.rank;
-  const bestRankInfo = seasonPeaks[0]?.rank || seasonPeaks[1]?.rank;
+  const bestRankInfo = seasonPeaks[1]?.rank || seasonPeaks[0]?.rank;
   const bestSeasonName = seasonPeaks[1]?.season || seasonPeaks[0]?.season || '';
 
   return (
@@ -48,11 +48,11 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
             <span className="text-[10px] text-slate-500 font-mono">No Custom Banner</span>
           </div>
         )}
-        
+
         {/* 現在のランクアイコンをバナー画像に重ねる（右下） */}
         {currentRankInfo?.imageUrl && (
-          <div 
-            className="absolute bottom-2 right-2 w-11 h-11 bg-slate-950/85 rounded-full border border-slate-700/60 flex items-center justify-center backdrop-blur-sm p-1 shadow-lg" 
+          <div
+            className="absolute bottom-2 right-2 w-11 h-11 bg-slate-950/85 rounded-full border border-slate-700/60 flex items-center justify-center backdrop-blur-sm p-1 shadow-lg"
             title={`Current Rank: ${currentRankInfo.rank}`}
           >
             <img src={currentRankInfo.imageUrl} alt={currentRankInfo.rank} className="w-full h-full object-contain" />
