@@ -29,7 +29,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   const trackerUrl = `https://r6.tracker.network/r6siege/profile/ubi/${encodeURIComponent(ubiId)}/overview`;
 
   const currentRankInfo = seasonPeaks[0]?.rank;
-  const bestRankInfo = seasonPeaks[1]?.rank || seasonPeaks[0]?.rank;
+  const bestRankInfo = seasonPeaks[0]?.rank || seasonPeaks[1]?.rank;
   const bestSeasonName = seasonPeaks[1]?.season || seasonPeaks[0]?.season || '';
 
   return (
