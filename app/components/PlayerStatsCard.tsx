@@ -30,17 +30,7 @@ const getWrColor = (wr: number): string => {
   return 'text-red-400';
 };
 
-/** ティアバッジの背景色クラス（ティア別） */
-const TIER_BADGE_STYLE: Record<StrengthTier, string> = {
-  champion: 'bg-gradient-to-r from-pink-600 via-yellow-400 to-cyan-400 text-black font-extrabold shadow-lg shadow-yellow-400/40',
-  diamond:  'bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-bold shadow-md shadow-violet-500/30',
-  emerald:  'bg-gradient-to-r from-emerald-600 to-teal-400 text-white font-bold shadow-md shadow-emerald-500/30',
-  platinum: 'bg-gradient-to-r from-slate-500 to-sky-400 text-white font-bold shadow-md shadow-sky-400/20',
-  gold:     'bg-gradient-to-r from-amber-600 to-yellow-400 text-black font-bold shadow-md shadow-yellow-400/20',
-  silver:   'bg-gradient-to-r from-slate-500 to-slate-300 text-black font-semibold',
-  bronze:   'bg-gradient-to-r from-amber-900 to-amber-600 text-white font-semibold',
-  copper:   'bg-gradient-to-r from-red-900 to-red-700 text-white font-semibold',
-};
+
 
 export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank } = stats;
@@ -134,7 +124,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
             右側: プレイヤー情報と戦績
             ──────────────────────────────────────────────────────────────── */}
         <div className="flex-1 p-3 flex flex-col justify-between overflow-hidden">
-          {/* 上段: 名前・基本情報・ティアバッジ */}
+          {/* 上段: 名前・基本情報 */}
           <div className="flex items-start justify-between gap-1">
             <div className="min-w-0">
               <a
@@ -145,28 +135,21 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 title="tracker.gg で開く"
               >
                 <h2
-                  className="text-sm font-extrabold tracking-wide truncate max-w-[110px] sm:max-w-[140px] group-hover:text-blue-300 transition-colors drop-shadow"
+                  className="text-sm font-extrabold tracking-wide truncate max-w-[140px] sm:max-w-[180px] group-hover:opacity-80 transition-opacity drop-shadow"
+                  style={{ color: deco.cardStyle.color || '#ffffff' }}
                   title={username}
                 >
                   {username}
                 </h2>
-                <svg className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 flex-shrink-0 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ stroke: deco.cardStyle.color || '#ffffff' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
-              <p className="text-[11px] text-slate-400 mt-0.5">Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
+              <p className="text-[11px] opacity-75 mt-0.5" style={{ color: deco.cardStyle.color || '#cbd5e1' }}>Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
             </div>
-
-            {/* ティアバッジ（右上） */}
-            <div
-              className={[
-                'flex-shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] leading-none',
-                TIER_BADGE_STYLE[tier],
-              ].join(' ')}
-              title={`強さスコア: ${score}`}
-            >
-              <span>{deco.tierEmoji}</span>
-              <span className="hidden sm:inline">{deco.tierLabel}</span>
+            {/* ティア絵文字を右上端にシンプルに配置 */}
+            <div className="text-lg leading-none" title={deco.tierLabel}>
+              {deco.tierEmoji}
             </div>
           </div>
 

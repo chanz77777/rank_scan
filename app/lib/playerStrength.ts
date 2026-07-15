@@ -209,8 +209,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         cardStyle: {
           background: 'linear-gradient(135deg, #1e003a 0%, #0a001f 35%, #00102a 65%, #1a002e 100%)',
           boxShadow: '0 0 30px 8px rgba(255,80,255,0.4), 0 0 60px 16px rgba(80,180,255,0.25), inset 0 0 40px rgba(150,0,255,0.08)',
+          color: '#ffffff',
         },
-        tierLabel: '',
+        tierLabel: 'チャンピオン',
         tierEmoji: '👑',
       };
 
@@ -223,8 +224,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         cardStyle: {
           background: 'linear-gradient(135deg, #18004a 0%, #0b0030 45%, #001a38 100%)',
           boxShadow: '0 0 18px 5px rgba(139,92,246,0.6), 0 0 36px 10px rgba(6,182,212,0.35)',
+          color: '#e0f2fe',
         },
-        tierLabel: '',
+        tierLabel: 'ダイヤモンド',
         tierEmoji: '💎',
       };
 
@@ -237,8 +239,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         cardStyle: {
           background: 'linear-gradient(135deg, #002818 0%, #001510 45%, #002018 100%)',
           boxShadow: '0 0 14px 4px rgba(16,185,129,0.55), 0 0 28px 8px rgba(5,150,105,0.35)',
+          color: '#ecfdf5',
         },
-        tierLabel: '',
+        tierLabel: 'エメラルド',
         tierEmoji: '💚',
       };
 
@@ -251,8 +254,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         cardStyle: {
           background: 'linear-gradient(135deg, #0a1828 0%, #050f1c 50%, #0a1a24 100%)',
           boxShadow: '0 0 12px 3px rgba(148,163,184,0.45), 0 0 24px 6px rgba(56,189,248,0.25)',
+          color: '#f0f9ff',
         },
-        tierLabel: '',
+        tierLabel: 'プラチナ',
         tierEmoji: '🩵',
       };
 
@@ -263,10 +267,11 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          background: 'linear-gradient(135deg, #1c1000 0%, #0e0800 50%, #1a1200 100%)',
+          background: 'linear-gradient(135deg, #2a1b02 0%, #120900 50%, #261700 100%)',
           boxShadow: '0 0 12px 4px rgba(251,191,36,0.5), 0 0 24px 6px rgba(217,119,6,0.25)',
+          color: '#fef3c7',
         },
-        tierLabel: '',
+        tierLabel: 'ゴールド',
         tierEmoji: '⭐',
       };
 
@@ -277,10 +282,11 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          background: 'linear-gradient(135deg, #0e1520 0%, #080c14 100%)',
+          background: 'linear-gradient(135deg, #0f1622 0%, #070b13 100%)',
           boxShadow: '0 0 8px 2px rgba(148,163,184,0.35)',
+          color: '#f1f5f9',
         },
-        tierLabel: '',
+        tierLabel: 'シルバー',
         tierEmoji: '🔘',
       };
 
@@ -291,10 +297,11 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          background: 'linear-gradient(135deg, #160a00 0%, #0a0500 100%)',
+          background: 'linear-gradient(135deg, #1b0d02 0%, #0b0500 100%)',
           boxShadow: '0 0 8px 2px rgba(180,83,9,0.35)',
+          color: '#fed7aa',
         },
-        tierLabel: '',
+        tierLabel: 'ブロンズ',
         tierEmoji: '🟫',
       };
 
@@ -307,8 +314,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         cardClassName: '',
         cardStyle: {
           background: 'linear-gradient(135deg, #120404 0%, #080202 100%)',
+          color: '#fca5a5',
         },
-        tierLabel: '',
+        tierLabel: 'コッパー',
         tierEmoji: '🔴',
       };
   }
