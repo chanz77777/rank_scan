@@ -71,6 +71,18 @@ body {
   }
 }
 
+/** 上位用背景アニメーション */
+@keyframes bg-gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-bg-flow {
+  background-size: 200% 200% !important;
+  animation: bg-gradient-flow 8s ease infinite;
+}
+
 /* ──────────────────────────────────────────────────────────
    ティア別ラッパークラス（padding でグラデーションボーダーを実現）
    ────────────────────────────────────────────────────────── */
