@@ -102,7 +102,7 @@ body {
 
 .animate-bg-flow {
   background-size: 200% 200% !important;
-  animation: bg-gradient-flow 6s ease infinite;
+  animation: bg-gradient-flow 0.4s ease infinite;
 }
 
 /** 強いプレイヤー用のフワフワ浮くエフェクト */
@@ -146,7 +146,7 @@ body {
       #ff0044, #ff7700, #ffe000, #00e676,
       #00e5ff, #2979ff, #d500f9, #ff0044);
   background-size: 300% 300%;
-  animation: rainbow-border-flow 3s linear infinite;
+  animation: rainbow-border-flow 0.8s linear infinite;
   padding: 3px;
   /* チャンピオンは最太楔 */
   border-radius: 0.75rem;

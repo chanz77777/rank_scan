@@ -153,7 +153,6 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               </a>
               <p className="text-[11px] opacity-75 mt-0.5" style={{ color: deco.cardStyle.color || '#cbd5e1' }}>
                 Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}
-                {score >= 80 && <span className="ml-1.5 text-[9px] text-yellow-400 font-extrabold animate-pulse">🔥🔥🔥</span>}
               </p>
             </div>
             {/* ティア絵文字を右上端にシンプルに配置 */}
