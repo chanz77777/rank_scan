@@ -74,14 +74,21 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
       {/* カード本体 */}
       <div
         className={[
-          'w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900',
-          'rounded-[10px]',   // ラッパーの rounded-xl (12px) より 2px 小さくしてボーダーを見せる
+          'w-full',
+          // 背景は cardStyle.background のインラインスタイルで制御（ティア別グラデーション）
+          // fallback: 背景未指定のティアはダークスレートに見える
+          'rounded-[9px]',   // ラッパーの rounded-xl(12px) より 3px 小さく（最大パディング分）
           'shadow-2xl overflow-hidden',
           'flex flex-row h-48 text-white relative',
           'transition-transform duration-200 hover:scale-[1.015]',
           deco.cardClassName,
         ].join(' ')}
-        style={deco.cardStyle}
+        style={{
+          // ティア指定がない場合のフォールバック背景
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+          // cardStyle を後から上書き（ティア別の色・shadow を優先）
+          ...deco.cardStyle,
+        }}
       >
         {/* ────────────────────────────────────────────────────────────────
             左側: バナー画像 (証明写真風)

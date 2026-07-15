@@ -87,14 +87,14 @@ body {
   );
   background-size: 300% 300%;
   animation: rainbow-border-flow 3s linear infinite;
-  padding: 2px;
-  border-radius: 0.75rem; /* rounded-xl と一致 */
+  padding: 3px; /* チャンピオンは最太楔 */
+  border-radius: 0.75rem;
 }
 
 /** Diamond: 紫→水色グラデ + glow-pulse アニメーション */
 .card-diamond-border {
   background: linear-gradient(135deg, #7c3aed, #06b6d4, #7c3aed);
-  padding: 2px;
+  padding: 3px; /* ダイヤモンドも太め */
   border-radius: 0.75rem;
   animation: glow-pulse-diamond 2.2s ease-in-out infinite;
 }
@@ -114,14 +114,14 @@ body {
 }
 .card-emerald-border {
   background: linear-gradient(135deg, #059669, #34d399, #0d9488, #34d399, #059669);
-  padding: 2px;
+  padding: 3px; /* エメラルドも太め */
   border-radius: 0.75rem;
   animation: glow-pulse-emerald 2.5s ease-in-out infinite;
 }
 
 /** Platinum: シルバー→水色ネオン */
 .card-platinum-border {
-  background: linear-gradient(135deg, #94a3b8, #38bdf8, #94a3b8);
+  background: linear-gradient(135deg, #94a3b8, #38bdf8, #e0f2fe, #38bdf8, #94a3b8);
   padding: 2px;
   border-radius: 0.75rem;
   animation: glow-pulse-platinum 2.8s ease-in-out infinite;
@@ -129,29 +129,30 @@ body {
 
 /** Gold: ゴールドグラデ */
 .card-gold-border {
-  background: linear-gradient(135deg, #b45309, #fbbf24, #d97706, #fbbf24, #b45309);
-  background-size: 200% 200%;
+  background: linear-gradient(135deg, #92400e, #fbbf24, #f59e0b, #fde68a, #f59e0b, #fbbf24, #92400e);
+  background-size: 300% 300%;
+  animation: rainbow-border-flow 4s linear infinite;
   padding: 2px;
   border-radius: 0.75rem;
 }
 
 /** Silver: 薄いシルバー輝き */
 .card-silver-border {
-  background: linear-gradient(135deg, #64748b, #cbd5e1, #64748b);
-  padding: 1px;
+  background: linear-gradient(135deg, #475569, #e2e8f0, #94a3b8, #e2e8f0, #475569);
+  padding: 1.5px;
   border-radius: 0.75rem;
 }
 
 /** Bronze: ブロンズアンバー */
 .card-bronze-border {
-  background: linear-gradient(135deg, #78350f, #d97706, #92400e);
-  padding: 1px;
+  background: linear-gradient(135deg, #78350f, #d97706, #b45309, #d97706, #78350f);
+  padding: 1.5px;
   border-radius: 0.75rem;
 }
 
 /** Copper: ダーク赤枠のみ（シンプル） */
 .card-copper-border {
-  border: 1px solid #7f1d1d;
+  border: 1.5px solid #991b1b;
   border-radius: 0.75rem;
 }
 

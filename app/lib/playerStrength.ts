@@ -54,14 +54,14 @@ export interface CardDecoration {
  */
 function getRankBaseScore(rankName: string): number {
   const upper = (rankName ?? '').toUpperCase().trim();
-  if (upper.startsWith('CHAMPION'))  return 70;
-  if (upper.startsWith('DIAMOND'))   return 58;
-  if (upper.startsWith('EMERALD'))   return 46;
-  if (upper.startsWith('PLATINUM'))  return 34;
-  if (upper.startsWith('GOLD'))      return 24;
-  if (upper.startsWith('SILVER'))    return 14;
-  if (upper.startsWith('BRONZE'))    return 6;
-  if (upper.startsWith('COPPER'))    return 2;
+  if (upper.startsWith('CHAMPION')) return 70;
+  if (upper.startsWith('DIAMOND')) return 58;
+  if (upper.startsWith('EMERALD')) return 46;
+  if (upper.startsWith('PLATINUM')) return 34;
+  if (upper.startsWith('GOLD')) return 24;
+  if (upper.startsWith('SILVER')) return 14;
+  if (upper.startsWith('BRONZE')) return 6;
+  if (upper.startsWith('COPPER')) return 2;
   return 0;
 }
 
@@ -97,13 +97,17 @@ function parsePlaytimeHours(timePlayed: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
-/** プレイ時間（時間数）→ ボーナス点（最大 10点） */
+/**
+ * プレイ時間（時間数）→ ボーナス点（最大 20点）
+ * 4桁（1000h以上）はかなり強いとみなし大幅加点
+ */
 function playtimeBonus(timePlayed: string): number {
   const hours = parsePlaytimeHours(timePlayed);
-  if (hours >= 3000) return 10;
-  if (hours >= 2000) return 8;
-  if (hours >= 1000) return 6;
-  if (hours >= 500)  return 4;
+  if (hours >= 5000) return 20; // 超ベテラン
+  if (hours >= 3000) return 16;
+  if (hours >= 2000) return 13;
+  if (hours >= 1000) return 10; // 4桁 = かなり強い
+  if (hours >= 500)  return 5;
   if (hours >= 200)  return 2;
   if (hours >= 50)   return 1;
   return 0;
@@ -177,7 +181,7 @@ export function getStrengthTier(score: number): StrengthTier {
   if (score >= 42) return 'platinum';
   if (score >= 30) return 'gold';
   if (score >= 18) return 'silver';
-  if (score >= 9)  return 'bronze';
+  if (score >= 9) return 'bronze';
   return 'copper';
 }
 
@@ -199,14 +203,14 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'champion':
       return {
         tier,
-        // globals.css の @keyframes rainbow-border-flow を使うクラス
         wrapperClassName: 'card-champion-border',
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow: '0 0 30px 6px rgba(255,100,255,0.35), 0 0 60px 12px rgba(100,200,255,0.2)',
+          background: 'linear-gradient(135deg, #1e003a 0%, #0a001f 35%, #00102a 65%, #1a002e 100%)',
+          boxShadow: '0 0 30px 8px rgba(255,80,255,0.4), 0 0 60px 16px rgba(80,180,255,0.25), inset 0 0 40px rgba(150,0,255,0.08)',
         },
-        tierLabel: 'チャンピオン',
+        tierLabel: '',
         tierEmoji: '👑',
       };
 
@@ -217,10 +221,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow:
-            '0 0 16px 4px rgba(139,92,246,0.55), 0 0 32px 8px rgba(6,182,212,0.3)',
+          background: 'linear-gradient(135deg, #18004a 0%, #0b0030 45%, #001a38 100%)',
+          boxShadow: '0 0 18px 5px rgba(139,92,246,0.6), 0 0 36px 10px rgba(6,182,212,0.35)',
         },
-        tierLabel: 'ダイヤモンド',
+        tierLabel: '',
         tierEmoji: '💎',
       };
 
@@ -231,9 +235,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow: '0 0 12px 3px rgba(16,185,129,0.5), 0 0 24px 6px rgba(5,150,105,0.3)',
+          background: 'linear-gradient(135deg, #002818 0%, #001510 45%, #002018 100%)',
+          boxShadow: '0 0 14px 4px rgba(16,185,129,0.55), 0 0 28px 8px rgba(5,150,105,0.35)',
         },
-        tierLabel: 'エメラルド',
+        tierLabel: '',
         tierEmoji: '💚',
       };
 
@@ -244,9 +249,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow: '0 0 10px 3px rgba(148,163,184,0.4), 0 0 20px 5px rgba(56,189,248,0.2)',
+          background: 'linear-gradient(135deg, #0a1828 0%, #050f1c 50%, #0a1a24 100%)',
+          boxShadow: '0 0 12px 3px rgba(148,163,184,0.45), 0 0 24px 6px rgba(56,189,248,0.25)',
         },
-        tierLabel: 'プラチナ',
+        tierLabel: '',
         tierEmoji: '🩵',
       };
 
@@ -257,9 +263,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow: '0 0 10px 3px rgba(251,191,36,0.45)',
+          background: 'linear-gradient(135deg, #1c1000 0%, #0e0800 50%, #1a1200 100%)',
+          boxShadow: '0 0 12px 4px rgba(251,191,36,0.5), 0 0 24px 6px rgba(217,119,6,0.25)',
         },
-        tierLabel: 'ゴールド',
+        tierLabel: '',
         tierEmoji: '⭐',
       };
 
@@ -270,9 +277,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow: '0 0 6px 2px rgba(148,163,184,0.3)',
+          background: 'linear-gradient(135deg, #0e1520 0%, #080c14 100%)',
+          boxShadow: '0 0 8px 2px rgba(148,163,184,0.35)',
         },
-        tierLabel: 'シルバー',
+        tierLabel: '',
         tierEmoji: '🔘',
       };
 
@@ -283,9 +291,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
-          boxShadow: '0 0 6px 2px rgba(180,83,9,0.3)',
+          background: 'linear-gradient(135deg, #160a00 0%, #0a0500 100%)',
+          boxShadow: '0 0 8px 2px rgba(180,83,9,0.35)',
         },
-        tierLabel: 'ブロンズ',
+        tierLabel: '',
         tierEmoji: '🟫',
       };
 
@@ -296,8 +305,10 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         wrapperClassName: 'card-copper-border',
         wrapperStyle: {},
         cardClassName: '',
-        cardStyle: {},
-        tierLabel: 'コッパー',
+        cardStyle: {
+          background: 'linear-gradient(135deg, #120404 0%, #080202 100%)',
+        },
+        tierLabel: '',
         tierEmoji: '🔴',
       };
   }
