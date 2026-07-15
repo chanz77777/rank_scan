@@ -102,7 +102,7 @@ body {
 
 .animate-bg-flow {
   background-size: 200% 200% !important;
-  animation: bg-gradient-flow 0.8s ease infinite;
+  animation: bg-gradient-flow 2s ease infinite;
 }
 
 /** 強いプレイヤー用のフワフワ浮くエフェクト */

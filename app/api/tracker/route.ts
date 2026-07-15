@@ -86,6 +86,26 @@ async function fetchWithCurl(ubiId: string): Promise<TrackerResponse | null> {
   }
 }
 
+function getRankBaseScore(rankName: string): number {
+  const upper = (rankName ?? '').toUpperCase().trim();
+  if (upper.startsWith('CHAMPION')) return 70;
+  if (upper.startsWith('DIAMOND')) return 58;
+  if (upper.startsWith('EMERALD')) return 46;
+  if (upper.startsWith('PLATINUM')) return 34;
+  if (upper.startsWith('GOLD')) return 24;
+  if (upper.startsWith('SILVER')) return 14;
+  if (upper.startsWith('BRONZE')) return 6;
+  if (upper.startsWith('COPPER')) return 2;
+  return 0;
+}
+
+function getRankSubBonus(rankName: string): number {
+  const m = (rankName ?? '').match(/(\d)$/);
+  if (!m) return 2;
+  const sub = parseInt(m[1], 10);
+  return sub === 1 ? 4 : sub === 2 ? 2 : 0;
+}
+
 function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats {
   const { platformInfo, metadata, segments } = json.data;
   const userInfo = (json.data as any).userInfo;
@@ -144,24 +164,41 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   });
 
   // ────────────────────────────────────────────────────────
-  // 過去最高ランクのピーク（MMR最大値）を探索
-  // 同値MMRが複数シーズンある場合はすべて収集する
+  // 過去最高ランクのピーク（階級ベース）を探索
+  // 同等の最高ランクが複数シーズンある場合はすべて収集する
   // ────────────────────────────────────────────────────────
-  let bestValue = 0;
+  let highestBaseScore = 0;
+  let highestSubBonus = 0;
 
+  // まず最高ランクの基準を特定
   for (const s of rankedSeasons) {
     const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
     if (!stat) continue;
-    const val = stat.value ?? 0;
-    if (val > bestValue) bestValue = val;
+    const meta = stat.metadata as { name?: string; tierName?: string } | undefined;
+    const rName = meta?.name || meta?.tierName || '';
+    if (!rName) continue;
+    
+    const base = getRankBaseScore(rName);
+    const sub = getRankSubBonus(rName);
+    const totalRankValue = base + sub; // 例: Emerald 1 は 46 + 4 = 50, Platinum 1 は 34 + 4 = 38
+    
+    if (totalRankValue > (highestBaseScore + highestSubBonus)) {
+      highestBaseScore = base;
+      highestSubBonus = sub;
+    }
   }
 
-  // 最高 MMR と一致する全シーズンを降順で取得
+  // 最高ランク階級と一致する全シーズンを抽出
   const bestPeakSeasons = sortedRankedSeasons.filter((s) => {
     const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
     if (!stat) return false;
-    const val = stat.value ?? 0;
-    return val >= bestValue && bestValue > 0;
+    const meta = stat.metadata as { name?: string; tierName?: string } | undefined;
+    const rName = meta?.name || meta?.tierName || '';
+    if (!rName) return false;
+    
+    const base = getRankBaseScore(rName);
+    const sub = getRankSubBonus(rName);
+    return base === highestBaseScore && sub === highestSubBonus && highestBaseScore > 0;
   });
 
   // SeasonPeak[] に変換
