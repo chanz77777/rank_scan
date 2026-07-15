@@ -203,9 +203,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'champion':
       return {
         tier,
-        wrapperClassName: 'card-champion-border',
+        wrapperClassName: 'card-champion-border animate-float',
         wrapperStyle: {},
-        cardClassName: 'animate-bg-flow',
+        cardClassName: 'animate-bg-flow scale-[1.03]',
         cardStyle: {
           background: 'linear-gradient(135deg, #3b0066 0%, #1a0044 50%, #4a004f 100%)',
           boxShadow: '0 0 35px 10px rgba(236,72,153,0.45), 0 0 70px 20px rgba(99,102,241,0.3)',
@@ -218,9 +218,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'diamond':
       return {
         tier,
-        wrapperClassName: 'card-diamond-border',
+        wrapperClassName: 'card-diamond-border animate-float',
         wrapperStyle: {},
-        cardClassName: 'animate-bg-flow',
+        cardClassName: 'animate-bg-flow scale-[1.02]',
         cardStyle: {
           background: 'linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #1e1b4b 100%)',
           boxShadow: '0 0 24px 6px rgba(168,85,247,0.5), 0 0 48px 12px rgba(6,182,212,0.3)',
@@ -233,9 +233,9 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'emerald':
       return {
         tier,
-        wrapperClassName: 'card-emerald-border',
+        wrapperClassName: 'card-emerald-border animate-float',
         wrapperStyle: {},
-        cardClassName: 'animate-bg-flow',
+        cardClassName: 'animate-bg-flow scale-[1.015]',
         cardStyle: {
           background: 'linear-gradient(135deg, #022c22 0%, #064e3b 50%, #022c22 100%)',
           boxShadow: '0 0 20px 5px rgba(52,211,153,0.5), 0 0 40px 10px rgba(5,150,105,0.3)',

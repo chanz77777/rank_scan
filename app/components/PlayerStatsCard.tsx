@@ -135,7 +135,13 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 title="tracker.gg で開く"
               >
                 <h2
-                  className="text-sm font-extrabold tracking-wide truncate max-w-[140px] sm:max-w-[180px] group-hover:opacity-80 transition-opacity drop-shadow"
+                  className={[
+                    'font-extrabold tracking-wide truncate max-w-[140px] sm:max-w-[180px] group-hover:opacity-80 transition-all drop-shadow',
+                    tier === 'champion' ? 'text-base neon-text-champion font-black' : '',
+                    tier === 'diamond' ? 'text-[15px] neon-text-diamond' : '',
+                    tier === 'emerald' ? 'text-[15px] neon-text-emerald' : '',
+                    tier !== 'champion' && tier !== 'diamond' && tier !== 'emerald' ? 'text-sm' : '',
+                  ].join(' ')}
                   style={{ color: deco.cardStyle.color || '#ffffff' }}
                   title={username}
                 >
@@ -145,7 +151,10 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
-              <p className="text-[11px] opacity-75 mt-0.5" style={{ color: deco.cardStyle.color || '#cbd5e1' }}>Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}</p>
+              <p className="text-[11px] opacity-75 mt-0.5" style={{ color: deco.cardStyle.color || '#cbd5e1' }}>
+                Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}
+                {score >= 80 && <span className="ml-1.5 text-[9px] text-yellow-400 font-extrabold animate-pulse">🔥🔥🔥</span>}
+              </p>
             </div>
             {/* ティア絵文字を右上端にシンプルに配置 */}
             <div className="text-lg leading-none" title={deco.tierLabel}>
