@@ -130,43 +130,59 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   const currentRankImg = currentRankMeta?.imageUrl || '';
   const currentRankVal = currentRankPointsStat?.value ?? 0;
 
-  // 過去最高ランクの探索
-  let bestRankName = currentRankName;
-  let bestRankImg = currentRankImg;
-  let bestValue = currentRankVal;
-  let bestSeasonName = seasonShortName;
-
+  // ────────────────────────────────────────────────────────
+  // ランク済みシーズン一覧の抽出 & シーズンID 降順でソート（最新が先頭）
+  // ────────────────────────────────────────────────────────
   const rankedSeasons = segments.filter(
     (s) => s.type === 'season' && s.attributes?.sessionType === 'ranked'
   );
 
+  const sortedRankedSeasons = [...rankedSeasons].sort((a, b) => {
+    const sa = (a.attributes?.season as number) ?? 0;
+    const sb = (b.attributes?.season as number) ?? 0;
+    return sb - sa; // 降順
+  });
+
+  // ────────────────────────────────────────────────────────
+  // 過去最高ランクのピーク（MMR最大値）を探索
+  // 同値MMRが複数シーズンある場合はすべて収集する
+  // ────────────────────────────────────────────────────────
+  let bestValue = 0;
+
   for (const s of rankedSeasons) {
     const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
-    if (stat) {
-      const val = stat.value ?? 0;
-      const meta = stat.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
-      const rName = meta?.name || meta?.tierName || '';
-      
-      if (val > bestValue && rName) {
-        bestValue = val;
-        bestRankName = rName;
-        bestRankImg = meta?.imageUrl || '';
-        bestSeasonName = s.metadata?.shortName as string ?? `S${s.attributes?.season}`;
-      }
-    }
+    if (!stat) continue;
+    const val = stat.value ?? 0;
+    if (val > bestValue) bestValue = val;
   }
 
-  const peaks = [];
-  if (currentRankName) {
+  // 最高 MMR と一致する全シーズンを降順で取得
+  const bestPeakSeasons = sortedRankedSeasons.filter((s) => {
+    const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
+    if (!stat) return false;
+    const val = stat.value ?? 0;
+    return val >= bestValue && bestValue > 0;
+  });
+
+  // SeasonPeak[] に変換
+  const peaks = bestPeakSeasons.map((s) => {
+    const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
+    const val = stat?.value ?? 0;
+    const meta = stat?.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
+    const rName = meta?.name || meta?.tierName || '';
+    const rImg  = meta?.imageUrl || '';
+    const sName = (s.metadata?.shortName as string) ?? `S${s.attributes?.season}`;
+    return {
+      season: sName,
+      rank: { rank: rName, mmr: Math.round(val), imageUrl: rImg },
+    };
+  }).filter((p) => p.rank.rank !== '');
+
+  // peaks が空（ランクデータなし）の場合は現在ランクをフォールバックとして入れる
+  if (peaks.length === 0 && currentRankName) {
     peaks.push({
       season: seasonShortName,
-      rank: { rank: currentRankName, mmr: Math.round(currentRankVal), imageUrl: currentRankImg }
-    });
-  }
-  if (bestRankName) {
-    peaks.push({
-      season: bestSeasonName,
-      rank: { rank: bestRankName, mmr: Math.round(bestValue), imageUrl: bestRankImg }
+      rank: { rank: currentRankName, mmr: Math.round(currentRankVal), imageUrl: currentRankImg },
     });
   }
 
@@ -175,6 +191,9 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     username,
     avatarUrl: platformInfo.avatarUrl ?? undefined,
     heroImageUrl,
+    currentRank: currentRankName
+      ? { rank: currentRankName, mmr: Math.round(currentRankVal), imageUrl: currentRankImg }
+      : undefined,
     currentSeason: {
       title: seasonShortName,
       winRate: parseFloat(seasonWinPct.toFixed(1)),

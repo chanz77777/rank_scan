@@ -24,3 +24,134 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================================
+   プレイヤーカード ティア別装飾
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────
+   キーフレーム定義
+   ────────────────────────────────────────────────────────── */
+
+/**
+ * Champion: レインボーグラデーションが流れるアニメーション
+ * background-size: 300% で大きなグラデーションをスクロールさせる
+ */
+@keyframes rainbow-border-flow {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/** Diamond: 紫〜シアンのグロー点滅 */
+@keyframes glow-pulse-diamond {
+  0%, 100% {
+    box-shadow:
+      0 0  8px  2px rgba(139, 92, 246, 0.50),
+      0 0 20px  5px rgba(6, 182, 212, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 20px  6px rgba(139, 92, 246, 0.85),
+      0 0 40px 12px rgba(6, 182, 212, 0.50);
+  }
+}
+
+/** Platinum: 淡い輝き点滅 */
+@keyframes glow-pulse-platinum {
+  0%, 100% {
+    box-shadow:
+      0 0  6px  2px rgba(148, 163, 184, 0.35),
+      0 0 14px  4px rgba(56, 189, 248, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 14px  4px rgba(148, 163, 184, 0.60),
+      0 0 28px  8px rgba(56, 189, 248, 0.35);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   ティア別ラッパークラス（padding でグラデーションボーダーを実現）
+   ────────────────────────────────────────────────────────── */
+
+/**
+ * Champion: 7色レインボーが流れる豪華ボーダー
+ * hue-rotate では背景位置スクロールと組み合わせて本物の虹色を実現
+ */
+.card-champion-border {
+  background: linear-gradient(
+    90deg,
+    #ff0044, #ff7700, #ffe000, #00e676,
+    #00e5ff, #2979ff, #d500f9, #ff0044
+  );
+  background-size: 300% 300%;
+  animation: rainbow-border-flow 3s linear infinite;
+  padding: 2px;
+  border-radius: 0.75rem; /* rounded-xl と一致 */
+}
+
+/** Diamond: 紫→水色グラデ + glow-pulse アニメーション */
+.card-diamond-border {
+  background: linear-gradient(135deg, #7c3aed, #06b6d4, #7c3aed);
+  padding: 2px;
+  border-radius: 0.75rem;
+  animation: glow-pulse-diamond 2.2s ease-in-out infinite;
+}
+
+/** Emerald: 翠緑→ティールグラデ + glow-pulse アニメーション */
+@keyframes glow-pulse-emerald {
+  0%, 100% {
+    box-shadow:
+      0 0  8px  2px rgba(16, 185, 129, 0.45),
+      0 0 18px  5px rgba(5, 150, 105, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 18px  5px rgba(16, 185, 129, 0.80),
+      0 0 36px 10px rgba(5, 150, 105, 0.45);
+  }
+}
+.card-emerald-border {
+  background: linear-gradient(135deg, #059669, #34d399, #0d9488, #34d399, #059669);
+  padding: 2px;
+  border-radius: 0.75rem;
+  animation: glow-pulse-emerald 2.5s ease-in-out infinite;
+}
+
+/** Platinum: シルバー→水色ネオン */
+.card-platinum-border {
+  background: linear-gradient(135deg, #94a3b8, #38bdf8, #94a3b8);
+  padding: 2px;
+  border-radius: 0.75rem;
+  animation: glow-pulse-platinum 2.8s ease-in-out infinite;
+}
+
+/** Gold: ゴールドグラデ */
+.card-gold-border {
+  background: linear-gradient(135deg, #b45309, #fbbf24, #d97706, #fbbf24, #b45309);
+  background-size: 200% 200%;
+  padding: 2px;
+  border-radius: 0.75rem;
+}
+
+/** Silver: 薄いシルバー輝き */
+.card-silver-border {
+  background: linear-gradient(135deg, #64748b, #cbd5e1, #64748b);
+  padding: 1px;
+  border-radius: 0.75rem;
+}
+
+/** Bronze: ブロンズアンバー */
+.card-bronze-border {
+  background: linear-gradient(135deg, #78350f, #d97706, #92400e);
+  padding: 1px;
+  border-radius: 0.75rem;
+}
+
+/** Copper: ダーク赤枠のみ（シンプル） */
+.card-copper-border {
+  border: 1px solid #7f1d1d;
+  border-radius: 0.75rem;
+}
+

@@ -40,5 +40,12 @@ export interface PlayerStats {
   heroImageUrl?: string; // ヘッダーバナー画像URL
   currentSeason: SeasonStats;
   lifetimeStats: LifetimeStats;
+  /** 現在シーズンのランク（明示フィールド）。seasonPeaks[0] のフォールバックも可 */
+  currentRank?: RankInfo;
+  /**
+   * 過去最高ランクのリスト（全シーズン通じての最高峰）。
+   * 同値の最高MMRが複数シーズン存在する場合はすべて含む。
+   * シーズンIDの降順（最新が先頭）でソート済み。
+   */
   seasonPeaks: SeasonPeak[];
 }
