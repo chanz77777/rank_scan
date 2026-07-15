@@ -102,14 +102,17 @@ body {
 
 .animate-bg-flow {
   background-size: 200% 200% !important;
-  animation: bg-gradient-flow 0.4s ease infinite;
+  animation: bg-gradient-flow 0.8s ease infinite;
 }
 
 /** 強いプレイヤー用のフワフワ浮くエフェクト */
 @keyframes float-card {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-8px);
   }

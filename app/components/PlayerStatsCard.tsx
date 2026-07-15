@@ -67,7 +67,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           'w-full',
           // 背景は cardStyle.background のインラインスタイルで制御（ティア別グラデーション）
           // fallback: 背景未指定のティアはダークスレートに見える
-          'rounded-[9px]',   // ラッパーの rounded-xl(12px) より 3px 小さく（最大パディング分）
+          'rounded-[9px] border border-slate-800/20',   // ラッパーの rounded-xl(12px) より 3px 小さく（最大パディング分）
           'shadow-2xl overflow-hidden',
           'flex flex-row h-48 text-white relative',
           'transition-transform duration-200 hover:scale-[1.015]',
