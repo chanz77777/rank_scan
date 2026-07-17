@@ -231,8 +231,8 @@ body {
    ============================================================ */
 
 /* ─── 💡 3D傾き効果の適用 ─── */
-.card-3d-champion {
-  /* JSから渡される --rx と --ry を適用して傾ける */
+.card-3d-champion,
+.card-3d-diamond {
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transition: transform 0.15s ease-out;
   transform-style: preserve-3d;
@@ -467,28 +467,53 @@ body {
 /* ============================================================
    ダイヤモンド専用 ホログラムエフェクト (CodePen移植版)
    ============================================================ */
+@keyframes auto-hologram-diamond {
+  0% {
+    background-position: center, 0% 50%, 0% 50%, 0% 50%, center;
+  }
+
+  50% {
+    background-position: center, 100% 50%, 100% 100%, 100% 100%, center;
+  }
+
+  100% {
+    background-position: center, 0% 50%, 0% 50%, 0% 50%, center;
+  }
+}
 
 /* ─── ダイヤモンド用 ハイライト層 ─── */
 .card-highlight-diamond {
-  /* CodePenの .highlight と同じ処理 */
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, .8) 10%, rgba(255, 255, 255, .65) 20%, rgba(0, 0, 0, .5) 90%);
+
+  /* 修正: 初期表示と自動アニメーションの設定 */
+  background-size: 200% 200%;
   mix-blend-mode: overlay;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  opacity: 0.75;
+  /* 非ホバー時でも表示する */
+  transition: opacity 0.4s ease, background-position 0.4s ease, background-size 0.4s ease;
+  animation: auto-highlight 8s ease-in-out infinite;
+  /* チャンピオン用のアニメーションを流用 */
 }
 
 .group:hover .card-highlight-diamond {
   opacity: 1;
-  /* ホバー時のみ光らせる */
+  /* 追加: ホバー時は自動動作を止め、マウス位置に連動させる */
+  animation: none;
+  background-position: center;
+  background-size: 100% 100%;
 }
 
 /* ─── ダイヤモンド用 ホログラム層 ─── */
 .card-hologram-diamond {
   /* CodePenの .color のブレンドモード */
   mix-blend-mode: color-dodge;
-  opacity: 0;
-  transition: opacity 0.3s ease;
 
+  /* 修正: 初期表示と自動アニメーションの設定 */
+  opacity: 0.8;
+  /* 非ホバー時でも表示する */
+  transition: opacity 0.4s ease, background-position 0.4s ease;
+  animation: auto-hologram-diamond 12s ease-in-out infinite;
+  /* 追加したアニメーションを適用 */
   /* CodePenの .color の複雑なグラデーション群を完全移植 */
   background-image:
     repeating-linear-gradient(90deg,
@@ -531,4 +556,6 @@ body {
 .group:hover .card-hologram-diamond {
   opacity: 1;
   /* ホバー時にホログラムを浮き上がらせる */
+  /* 追加: ホバー時は自動アニメーションを停止 */
+  animation: none;
 }

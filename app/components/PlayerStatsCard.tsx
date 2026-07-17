@@ -142,9 +142,13 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
     cardRef.current.style.setProperty('--my', '50%');
     cardRef.current.style.setProperty('--posx', '50%');
     cardRef.current.style.setProperty('--posy', '50%');
-
-    // 明るさの係数（hyp）を、一番輝きが綺麗に映える「0.6」に強制固定
     cardRef.current.style.setProperty('--hyp', '0.6');
+
+    // 🌟 追加：ダイヤモンド用変数も中央（50%）にリセット
+    cardRef.current.style.setProperty('--holo-pos', '50% 50%');
+    cardRef.current.style.setProperty('--holo-x', '50%');
+    cardRef.current.style.setProperty('--holo-y', '50%');
+    cardRef.current.style.setProperty('--holo-hyp', '0.6');
   };
 
   return (
