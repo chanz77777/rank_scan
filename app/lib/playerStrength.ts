@@ -103,13 +103,13 @@ function parsePlaytimeHours(timePlayed: string): number {
  */
 function playtimeBonus(timePlayed: string): number {
   const hours = parsePlaytimeHours(timePlayed);
-  if (hours >= 5000) return 20; // 超ベテラン
-  if (hours >= 3000) return 16;
-  if (hours >= 2000) return 13;
-  if (hours >= 1000) return 10; // 4桁 = かなり強い
-  if (hours >= 500)  return 5;
-  if (hours >= 200)  return 2;
-  if (hours >= 50)   return 1;
+  if (hours >= 5000) return 50; // 超ベテラン
+  if (hours >= 3000) return 30;
+  if (hours >= 2000) return 25;
+  if (hours >= 1000) return 20; // 4桁 = かなり強い
+  if (hours >= 500) return 15;
+  if (hours >= 200) return 10;
+  if (hours >= 50) return 1;
   return 0;
 }
 
@@ -203,7 +203,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'champion':
       return {
         tier,
-        wrapperClassName: 'card-champion-border animate-float scale-[1.03]',
+        wrapperClassName: 'animate-float',
         wrapperStyle: {},
         cardClassName: 'animate-bg-flow',
         cardStyle: {
@@ -218,7 +218,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'diamond':
       return {
         tier,
-        wrapperClassName: 'card-diamond-border animate-float scale-[1.02]',
+        wrapperClassName: 'animate-float',
         wrapperStyle: {},
         cardClassName: 'animate-bg-flow',
         cardStyle: {
@@ -233,7 +233,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'emerald':
       return {
         tier,
-        wrapperClassName: 'card-emerald-border animate-float scale-[1.015]',
+        wrapperClassName: 'animate-float',
         wrapperStyle: {},
         cardClassName: 'animate-bg-flow',
         cardStyle: {
@@ -248,7 +248,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'platinum':
       return {
         tier,
-        wrapperClassName: 'card-platinum-border',
+        wrapperClassName: '',
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
@@ -263,7 +263,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'gold':
       return {
         tier,
-        wrapperClassName: 'card-gold-border',
+        wrapperClassName: '',
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
@@ -278,7 +278,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'silver':
       return {
         tier,
-        wrapperClassName: 'card-silver-border',
+        wrapperClassName: '',
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
@@ -293,7 +293,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'bronze':
       return {
         tier,
-        wrapperClassName: 'card-bronze-border',
+        wrapperClassName: '',
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {
@@ -309,7 +309,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     default:
       return {
         tier,
-        wrapperClassName: 'card-copper-border',
+        wrapperClassName: '',
         wrapperStyle: {},
         cardClassName: '',
         cardStyle: {

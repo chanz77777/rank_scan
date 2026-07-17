@@ -500,30 +500,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 抽出プレイヤーID（デフォルト非表示） */}
-        {extractedPlayerIds.length > 0 && (
-          <div className="max-w-7xl mx-auto mb-6">
-            <button
-              onClick={() => setShowDebug(!showDebug)}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors mb-2"
-            >
-              {showDebug ? '▼ 抽出ID を隠す' : `▶ 抽出ID を表示 (${extractedPlayerIds.length}人)`}
-            </button>
-            {showDebug && (
-              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-1.5">
-                {extractedPlayerIds.map((id, index) => (
-                  <div key={id} className="bg-slate-800 rounded px-2 py-1 border border-slate-700 text-center">
-                    <p className="text-xs text-slate-500">#{index + 1}</p>
-                    <p className="text-xs text-white font-mono truncate" title={id}>{id}</p>
-                    {[...allies, ...enemies].find((p: PlayerStats) => p.ubiId === id) && (
-                      <p className="text-xs text-green-400">✓</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* プレイヤーカード */}
         <div className="max-w-full px-8 mx-auto">
@@ -551,7 +527,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
                     味方チーム ({allies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
                     {allies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
@@ -575,7 +551,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-red-400"></span>
                     敵チーム ({enemies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-4">
                     {enemies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
@@ -595,12 +571,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* フッター */}
-        <div className="max-w-7xl mx-auto mt-16 pt-6 border-t border-slate-800">
-          <p className="text-center text-slate-600 text-xs">
-            R6 Siege Stats Dashboard — Data from R6 Tracker Network
-          </p>
-        </div>
       </div>
     </main>
   );

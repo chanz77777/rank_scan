@@ -214,9 +214,6 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
         </div>
 
         {/* 💡 チャンピオン・ダイヤモンド共通：キラキラホログラムとハイライトを背後に重ねる */}
-        {/* ==========================================
-            🌟 変更点②：クラスの出し分け
-            ========================================== */}
         {isHoloCard && (
           <>
             <div className={`absolute inset-0 z-[1] pointer-events-none rounded-[9px] ${tier === 'diamond' ? 'card-hologram-diamond' : 'card-hologram'
@@ -243,10 +240,6 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 <h2
                   className={[
                     'font-extrabold tracking-wide truncate max-w-[110px] group-hover/link:opacity-80 transition-all drop-shadow',
-                    tier === 'champion' ? 'text-[14px] neon-text-champion font-black' : '',
-                    tier === 'diamond' ? 'text-[13px] neon-text-diamond font-black' : '',
-                    tier === 'emerald' ? 'text-[13px] neon-text-emerald' : '',
-                    tier !== 'champion' && tier !== 'diamond' && tier !== 'emerald' ? 'text-xs' : '',
                   ].join(' ')}
                   style={{
                     ...textStrokeWhiteStyle,
@@ -320,7 +313,6 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
                   className="text-[11px] font-black leading-tight"
-                  style={{ color: '#fbbf24', ...textStrokeWhiteStyle }}
                 >
                   {currentSeason.matches}
                 </p>
