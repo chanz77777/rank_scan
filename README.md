@@ -69,6 +69,8 @@ npm install
 
 ```bash
 npm run dev
+
+Remove-Item -Recurse -Force .next; npm run dev
 ```
 
 http://localhost:3000 でアプリケーションが起動します

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, MouseEvent } from 'react'; // 💡 useRef と MouseEvent をインポート
 import { PlayerStats } from '@/app/lib/types';
 import {
   calcStrengthScore,
@@ -71,35 +72,106 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   const tier = getStrengthTier(score);
   const deco = getCardDecoration(tier);
 
+  // 💡 3D傾き効果・ホログラム計算用の参照
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // 💡 マウス移動時の座標計算ハンドラ（CodePenの計算処理を100%再現）
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (tier !== 'champion' || !cardRef.current) return;
+
+    const bounds = cardRef.current.getBoundingClientRect();
+    const pointerX = e.clientX - bounds.x;
+    const pointerY = e.clientY - bounds.y;
+
+    const ratioX = pointerX / bounds.width;
+    const ratioY = pointerY / bounds.height;
+
+    // 💡 1. オリジナル通りの3D傾き角の算出
+    const rX = (ratioX - 0.5) * -30; // X方向の傾き
+    const rY = (ratioY - 0.5) * 50;  // Y方向の傾き
+
+    // 💡 2. 光の中心点座標（mx, my）
+    const mX = ratioX * 100;
+    const mY = ratioY * 100;
+
+    // 💡 3. 対角距離の計算 (中心(0.5, 0.5)からの距離比を求めて明るさフィルターに送る)
+    const hyp = Math.sqrt(Math.pow(ratioX - 0.5, 2) + Math.pow(ratioY - 0.5, 2)) * 2;
+
+    cardRef.current.style.setProperty('--ratiox', ratioX.toString());
+    cardRef.current.style.setProperty('--ratioy', ratioY.toString());
+    cardRef.current.style.setProperty('--rx', `${rX}deg`);
+    cardRef.current.style.setProperty('--ry', `${rY}deg`);
+    cardRef.current.style.setProperty('--mx', `${mX}%`);
+    cardRef.current.style.setProperty('--my', `${mY}%`);
+
+    // 背景ホロの位置ずれ（オリジナルの座標同期に調整）
+    cardRef.current.style.setProperty('--posx', `${mX}%`);
+    cardRef.current.style.setProperty('--posy', `${mY}%`);
+    cardRef.current.style.setProperty('--hyp', hyp.toString());
+  };
+
+  // 💡 マウスが離れたとき：デフォルトの美しい輝き位置・明るさに強制固定する
+  const handleMouseLeave = () => {
+    if (tier !== 'champion' || !cardRef.current) return;
+
+    // 3Dの傾きはまっさらに戻す
+    cardRef.current.style.setProperty('--rx', '0deg');
+    cardRef.current.style.setProperty('--ry', '0deg');
+
+    // ★ ここが超重要：非ホバー時でもキラキラの計算式が潰れないよう、デフォルト値を直接流し込む
+    cardRef.current.style.setProperty('--mx', '50%');
+    cardRef.current.style.setProperty('--my', '50%');
+    cardRef.current.style.setProperty('--posx', '50%');
+    cardRef.current.style.setProperty('--posy', '50%');
+
+    // 明るさの係数（hyp）を、一番輝きが綺麗に映える「0.6」に強制固定
+    cardRef.current.style.setProperty('--hyp', '0.6');
+  };
+
   return (
     // ────────────────────────────────────────────────────────────────────────
     // 外側ラッパー: ティア別グラデーションボーダーを担う
+    // 💡 3Dを効かせるため perspective (奥行き) を仕込み、傾きアニメーション用のハンドラを追加
     // ────────────────────────────────────────────────────────────────────────
     <div
-      className={deco.wrapperClassName}
-      style={deco.wrapperStyle}
+      className={`${deco.wrapperClassName} group`}
+      style={{
+        ...deco.wrapperStyle,
+        perspective: tier === 'champion' ? '600px' : 'none',
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       {/* カード本体 */}
       <div
+        ref={cardRef} // 💡 3D制御・CSS変数適用のための参照バインド
         className={[
           'w-full',
           'rounded-[9px] border border-slate-700/60',
           'shadow-2xl overflow-hidden',
-          // ─── 👇 縦横比を維持したまま、1画面に余裕で収まるサイズに制限 ───
           'flex flex-col aspect-[63/88] relative max-w-[350px] mx-auto',
-          // ────────────────────────────────────────────────────────────
-          'transition-transform duration-200 hover:scale-[1.015]',
+          // 💡 champion以外のホバーアニメーション（元々の実装）を条件分岐で残す
+          tier === 'champion'
+            ? 'card-3d-champion'
+            : 'transition-transform duration-200 hover:scale-[1.015]',
           deco.cardClassName,
         ].join(' ')}
         style={{
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
           ...deco.cardStyle,
-        }}
+          // 初期値のCSS変数をセットしておく
+          '--rx': '0deg',
+          '--ry': '0deg',
+          '--mx': '50%',
+          '--my': '50%',
+          '--posx': '50%',
+          '--posy': '50%',
+        } as any}
       >
         {/* ────────────────────────────────────────────────────────────────
-            背景画像（z-index 0 で常時表示。文字が見やすいように少し暗め(opacity-45)に設定）
+            背景画像（z-index 0 で常時表示）
             ──────────────────────────────────────────────────────────────── */}
-        <div className="absolute inset-0 w-full h-full z-0 overflow-hidden group">
+        <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
           {heroImageUrl ? (
             <img
               src={heroImageUrl}
@@ -116,8 +188,16 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/5 via-slate-950/30 to-slate-950/70" />
         </div>
 
+        {/* 💡 チャンピオン専用：キラキラホログラムとハイライトを背後に重ねる */}
+        {tier === 'champion' && (
+          <>
+            <div className="card-hologram absolute inset-0 z-[1] pointer-events-none rounded-[9px]" />
+            <div className="card-highlight absolute inset-0 z-[2] pointer-events-none rounded-[9px]" />
+          </>
+        )}
+
         {/* ────────────────────────────────────────────────────────────────
-            コンテンツ（relative z-10）
+            コンテンツ（relative z-10）- z-indexを上げてホログラムの上に配置します
             ──────────────────────────────────────────────────────────────── */}
         <div className="flex-1 p-2 flex flex-col justify-between overflow-hidden relative z-10 select-none">
           {/* 上段: 名前・基本情報 */}
@@ -127,36 +207,36 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 href={trackerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-1 w-fit"
+                className="group/link flex items-center gap-1 w-fit"
                 title="tracker.gg で開く"
               >
                 <h2
                   className={[
-                    'font-extrabold tracking-wide truncate max-w-[110px] group-hover:opacity-80 transition-all drop-shadow',
+                    'font-extrabold tracking-wide truncate max-w-[110px] group-hover/link:opacity-80 transition-all drop-shadow',
                     tier === 'champion' ? 'text-[14px] neon-text-champion font-black' : '',
                     tier === 'diamond' ? 'text-[13px] neon-text-diamond' : '',
                     tier === 'emerald' ? 'text-[13px] neon-text-emerald' : '',
                     tier !== 'champion' && tier !== 'diamond' && tier !== 'emerald' ? 'text-xs' : '',
                   ].join(' ')}
                   style={{
-                    ...textStrokeWhiteStyle, // 👈 ここで「黒文字・細い白縁取り」を適用
+                    ...textStrokeWhiteStyle,
                   }}
                   title={username}
                 >
                   {username}
                 </h2>
-                <svg className="w-3 h-3 opacity-80 group-hover:opacity-100 flex-shrink-0 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ stroke: '#ffffff' }}>
+                <svg className="w-3 h-3 opacity-80 group-hover/link:opacity-100 flex-shrink-0 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ stroke: '#ffffff' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
               <p
                 className="text-[9px] font-bold mt-0.5"
-                style={textStrokeWhiteStyle} // 👈 「Lv.XX · XXh」も黒文字＋白縁取りに
+                style={textStrokeWhiteStyle}
               >
                 Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}
               </p>
             </div>
-            {/* ランクアイコンを右上端に綺麗に配置 */}
+            {/* ランクアイコン */}
             <div className="text-base leading-none" title={deco.tierLabel}>
               {currentRankInfo?.imageUrl && (
                 <div
@@ -174,7 +254,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
             <div className="flex justify-between items-center mb-0.5">
               <span
                 className="text-[8px] font-bold tracking-wider uppercase"
-                style={textStrokeWhiteStyle} // 今シーズン名も縁取り
+                style={textStrokeWhiteStyle}
               >
                 {currentSeason.title}
               </span>
@@ -182,7 +262,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 <span
                   className="text-[8px] font-extrabold truncate max-w-[80px]"
                   title={currentRankInfo.rank}
-                  style={textStrokeWhiteStyle} // 現在のランク名も縁取り
+                  style={textStrokeWhiteStyle}
                 >
                   {currentRankInfo.rank}
                 </span>
@@ -192,7 +272,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
                   className="text-[11px] font-black leading-tight"
-                  style={getWrColorStyle(currentSeason.winRate)} // 👈 勝率の色＋白縁取り
+                  style={getWrColorStyle(currentSeason.winRate)}
                 >
                   {currentSeason.winRate.toFixed(1)}%
                 </p>
@@ -201,7 +281,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
                   className="text-[11px] font-black leading-tight"
-                  style={getKdColorStyle(currentSeason.kd)} // 👈 K/Dの色＋白縁取り
+                  style={getKdColorStyle(currentSeason.kd)}
                 >
                   {currentSeason.kd.toFixed(2)}
                 </p>
@@ -210,7 +290,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
                   className="text-[11px] font-black leading-tight"
-                  style={{ color: '#fbbf24', ...textStrokeWhiteStyle }} // 👈 Gamesの色＋白縁取り
+                  style={{ color: '#fbbf24', ...textStrokeWhiteStyle }}
                 >
                   {currentSeason.matches}
                 </p>
@@ -242,7 +322,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                   </p>
                 </div>
               </div>
-              {/* 同率ベストが複数ある場合は件数を表示 */}
+              {/* 同率ベスト */}
               <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                 <span
                   className="text-[7px] font-mono italic font-bold"
