@@ -463,3 +463,72 @@ body {
     calc(var(--posx, 50%) * -1.2) calc(var(--posy, 50%) * -1.2),
     calc(var(--posx, 50%) * 0.5) calc(var(--posy, 50%) * 0.5);
 }
+
+/* ============================================================
+   ダイヤモンド専用 ホログラムエフェクト (CodePen移植版)
+   ============================================================ */
+
+/* ─── ダイヤモンド用 ハイライト層 ─── */
+.card-highlight-diamond {
+  /* CodePenの .highlight と同じ処理 */
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, .8) 10%, rgba(255, 255, 255, .65) 20%, rgba(0, 0, 0, .5) 90%);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.group:hover .card-highlight-diamond {
+  opacity: 1;
+  /* ホバー時のみ光らせる */
+}
+
+/* ─── ダイヤモンド用 ホログラム層 ─── */
+.card-hologram-diamond {
+  /* CodePenの .color のブレンドモード */
+  mix-blend-mode: color-dodge;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  /* CodePenの .color の複雑なグラデーション群を完全移植 */
+  background-image:
+    repeating-linear-gradient(90deg,
+      hsl(0, 70%, 50%) 0%, hsl(0, 70%, 50%) 1.5%, black 1.5015%, black 2.9985%,
+      hsl(21, 70%, 50%) 3%, hsl(21, 70%, 50%) 4.5%, black 4.5015%, black 5.9985%,
+      hsl(42, 70%, 50%) 6%, hsl(42, 70%, 50%) 7.5%, black 7.5015%, black 8.9985%,
+      hsl(63, 70%, 50%) 9%, hsl(63, 70%, 50%) 10.5%, black 10.5015%, black 11.9985%,
+      hsl(84, 70%, 50%) 12%, hsl(84, 70%, 50%) 13.5%, black 13.5015%, black 14.9985%,
+      hsl(105, 70%, 50%) 15%, hsl(105, 70%, 50%) 16.5%, black 16.5015%, black 17.9985%,
+      hsl(126, 70%, 50%) 18%, hsl(126, 70%, 50%) 19.5%, black 19.5015%, black 20.9985%,
+      hsl(147, 70%, 50%) 21%, hsl(147, 70%, 50%) 22.5%, black 22.5015%, black 23.9985%,
+      hsl(168, 70%, 50%) 24%, hsl(168, 70%, 50%) 25.5%, black 25.5015%, black 26.9985%,
+      hsl(189, 70%, 50%) 27%, hsl(189, 70%, 50%) 28.5%, black 28.5015%, black 29.9985%,
+      hsl(210, 70%, 50%) 30%, hsl(210, 70%, 50%) 31.5%, black 31.5015%, black 32.9985%,
+      hsl(231, 70%, 50%) 33%, hsl(231, 70%, 50%) 34.5%, black 34.5015%, black 35.9985%,
+      hsl(252, 70%, 50%) 36%, hsl(252, 70%, 50%) 37.5%, black 37.5015%, black 38.9985%,
+      hsl(273, 70%, 50%) 39%, hsl(273, 70%, 50%) 40.5%, black 40.5015%, black 41.9985%,
+      hsl(294, 70%, 50%) 42%, hsl(294, 70%, 50%) 43.5%, black 43.5015%, black 44.9985%,
+      hsl(315, 70%, 50%) 45%, hsl(315, 70%, 50%) 46.5%, black 46.5015%, black 47.9985%),
+    repeating-linear-gradient(90deg, #c929f1, #0dbde9, #21e985, #eedf10, #f80e7b, #c929f1),
+    repeating-linear-gradient(90deg, rgb(10, 10, 10) 8%, rgba(255, 255, 255, 0.6) 12%, rgb(10, 10, 10) 15%, rgba(255, 255, 255, 0.6) 16%, rgb(10, 10, 10) 20%, rgb(10, 10, 10) 48%),
+    repeating-linear-gradient(90deg, rgb(10, 10, 10) 8%, rgba(255, 255, 255, 0.6) 12%, rgb(10, 10, 10) 15%, rgba(255, 255, 255, 0.6) 16%, rgb(10, 10, 10) 20%, rgb(10, 10, 10) 36%),
+    radial-gradient(farthest-corner circle at var(--mx, 50%) var(--my, 50%), rgba(230, 230, 230, 0.85) 0%, rgba(200, 200, 200, .1) 25%, rgb(0, 0, 0) 90%);
+
+  background-blend-mode: soft-light, soft-light, screen, overlay;
+  background-size: 100px 100px, 200% 200%, 237% 237%, 195% 195%, 120% 120%;
+
+  /* React側で設定した --holo-x などの専用変数を使用してパララックスさせる */
+  background-position:
+    center,
+    calc(((50% - var(--holo-x, 50%)) * 25) + 50%) center,
+    calc(var(--holo-x, 50%) * -1.2) var(--holo-y, 50%),
+    var(--holo-pos, 50% 50%),
+    center;
+
+  /* 明るさ計算にも専用の --holo-hyp を使用 */
+  filter: brightness(calc((var(--holo-hyp, 0.6) + 0.7) * 0.7)) contrast(3) saturate(.35);
+}
+
+.group:hover .card-hologram-diamond {
+  opacity: 1;
+  /* ホバー時にホログラムを浮き上がらせる */
+}

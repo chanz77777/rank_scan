@@ -75,9 +75,12 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   // 💡 3D傾き効果・ホログラム計算用の参照
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // 💡 マウス移動時の座標計算ハンドラ（CodePenの計算処理を100%再現）
+  // 💡 ダイヤモンドとチャンピオンをエフェクト対象とする判定条件
+  const isHoloCard = tier === 'diamond' || tier === 'champion';
+
+  // 💡 マウス移動時の座標計算ハンドラ
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (tier !== 'champion' || !cardRef.current) return;
+    if (!isHoloCard || !cardRef.current) return;
 
     const bounds = cardRef.current.getBoundingClientRect();
     const pointerX = e.clientX - bounds.x;
@@ -86,17 +89,27 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
     const ratioX = pointerX / bounds.width;
     const ratioY = pointerY / bounds.height;
 
-    // 💡 1. オリジナル通りの3D傾き角の算出
-    const rX = (ratioX - 0.5) * -30; // X方向の傾き
-    const rY = (ratioY - 0.5) * 50;  // Y方向の傾き
+    // 1. オリジナル通りの3D傾き角の算出
+    const rX = (ratioX - 0.5) * -30;
+    const rY = (ratioY - 0.5) * 50;
 
-    // 💡 2. 光の中心点座標（mx, my）
+    // 2. 光の中心点座標（mx, my）
     const mX = ratioX * 100;
     const mY = ratioY * 100;
 
-    // 💡 3. 対角距離の計算 (中心(0.5, 0.5)からの距離比を求めて明るさフィルターに送る)
+    // ==========================================
+    // 🌟 変更点①：CodePenに合わせた計算式の追加
+    // ==========================================
+    // ダイヤモンド専用：CodePen準拠のパララックス位置計算
+    const holoX = 50 + (ratioX - 0.5) * 28;
+    const holoY = 50 + (ratioY - 0.5) * 28;
+    // ダイヤモンド専用：CodePen準拠の明るさ(hyp)計算（* 10 / 7 を使用）
+    const holoHyp = Math.sqrt(Math.pow(ratioX - 0.5, 2) + Math.pow(ratioY - 0.5, 2)) * (10 / 7);
+
+    // チャンピオン用：従来の対角距離計算
     const hyp = Math.sqrt(Math.pow(ratioX - 0.5, 2) + Math.pow(ratioY - 0.5, 2)) * 2;
 
+    // 共通のCSS変数セット
     cardRef.current.style.setProperty('--ratiox', ratioX.toString());
     cardRef.current.style.setProperty('--ratioy', ratioY.toString());
     cardRef.current.style.setProperty('--rx', `${rX}deg`);
@@ -104,21 +117,27 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
     cardRef.current.style.setProperty('--mx', `${mX}%`);
     cardRef.current.style.setProperty('--my', `${mY}%`);
 
-    // 背景ホロの位置ずれ（オリジナルの座標同期に調整）
+    // チャンピオン用CSS変数
     cardRef.current.style.setProperty('--posx', `${mX}%`);
     cardRef.current.style.setProperty('--posy', `${mY}%`);
     cardRef.current.style.setProperty('--hyp', hyp.toString());
+
+    // 🌟 ダイヤモンド用CSS変数（CodePenの変数を名前を変えて注入）
+    cardRef.current.style.setProperty('--holo-pos', `${holoX}% ${holoY}%`);
+    cardRef.current.style.setProperty('--holo-x', `${holoX}%`);
+    cardRef.current.style.setProperty('--holo-y', `${holoY}%`);
+    cardRef.current.style.setProperty('--holo-hyp', holoHyp.toString());
   };
 
   // 💡 マウスが離れたとき：デフォルトの美しい輝き位置・明るさに強制固定する
   const handleMouseLeave = () => {
-    if (tier !== 'champion' || !cardRef.current) return;
+    if (!isHoloCard || !cardRef.current) return;
 
     // 3Dの傾きはまっさらに戻す
     cardRef.current.style.setProperty('--rx', '0deg');
     cardRef.current.style.setProperty('--ry', '0deg');
 
-    // ★ ここが超重要：非ホバー時でもキラキラの計算式が潰れないよう、デフォルト値を直接流し込む
+    // 非ホバー時でもキラキラの計算式が潰れないよう、デフォルト値を直接流し込む
     cardRef.current.style.setProperty('--mx', '50%');
     cardRef.current.style.setProperty('--my', '50%');
     cardRef.current.style.setProperty('--posx', '50%');
@@ -131,13 +150,13 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   return (
     // ────────────────────────────────────────────────────────────────────────
     // 外側ラッパー: ティア別グラデーションボーダーを担う
-    // 💡 3Dを効かせるため perspective (奥行き) を仕込み、傾きアニメーション用のハンドラを追加
+    // 💡 ホロ対象カードに perspective (奥行き) を仕込み、傾きアニメーション用のハンドラを追加
     // ────────────────────────────────────────────────────────────────────────
     <div
       className={`${deco.wrapperClassName} group`}
       style={{
         ...deco.wrapperStyle,
-        perspective: tier === 'champion' ? '600px' : 'none',
+        perspective: isHoloCard ? '600px' : 'none',
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -150,10 +169,12 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           'rounded-[9px] border border-slate-700/60',
           'shadow-2xl overflow-hidden',
           'flex flex-col aspect-[63/88] relative max-w-[350px] mx-auto',
-          // 💡 champion以外のホバーアニメーション（元々の実装）を条件分岐で残す
+          // 💡 ティアに応じた専用のクラスを付与し、それ以外は標準のホバースケールを適用
           tier === 'champion'
             ? 'card-3d-champion'
-            : 'transition-transform duration-200 hover:scale-[1.015]',
+            : tier === 'diamond'
+              ? 'card-3d-diamond' // ※もしCSS側で呼ぶ名前が別なら適宜差し替えてください
+              : 'transition-transform duration-200 hover:scale-[1.015]',
           deco.cardClassName,
         ].join(' ')}
         style={{
@@ -188,11 +209,16 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/5 via-slate-950/30 to-slate-950/70" />
         </div>
 
-        {/* 💡 チャンピオン専用：キラキラホログラムとハイライトを背後に重ねる */}
-        {tier === 'champion' && (
+        {/* 💡 チャンピオン・ダイヤモンド共通：キラキラホログラムとハイライトを背後に重ねる */}
+        {/* ==========================================
+            🌟 変更点②：クラスの出し分け
+            ========================================== */}
+        {isHoloCard && (
           <>
-            <div className="card-hologram absolute inset-0 z-[1] pointer-events-none rounded-[9px]" />
-            <div className="card-highlight absolute inset-0 z-[2] pointer-events-none rounded-[9px]" />
+            <div className={`absolute inset-0 z-[1] pointer-events-none rounded-[9px] ${tier === 'diamond' ? 'card-hologram-diamond' : 'card-hologram'
+              }`} />
+            <div className={`absolute inset-0 z-[2] pointer-events-none rounded-[9px] ${tier === 'diamond' ? 'card-highlight-diamond' : 'card-highlight'
+              }`} />
           </>
         )}
 
@@ -214,7 +240,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                   className={[
                     'font-extrabold tracking-wide truncate max-w-[110px] group-hover/link:opacity-80 transition-all drop-shadow',
                     tier === 'champion' ? 'text-[14px] neon-text-champion font-black' : '',
-                    tier === 'diamond' ? 'text-[13px] neon-text-diamond' : '',
+                    tier === 'diamond' ? 'text-[13px] neon-text-diamond font-black' : '',
                     tier === 'emerald' ? 'text-[13px] neon-text-emerald' : '',
                     tier !== 'champion' && tier !== 'diamond' && tier !== 'emerald' ? 'text-xs' : '',
                   ].join(' ')}
