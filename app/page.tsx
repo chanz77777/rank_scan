@@ -531,13 +531,6 @@ export default function Home() {
                     {allies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
-                        <button
-                          onClick={() => handleRemovePlayer(player.ubiId)}
-                          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg text-xs"
-                          title="削除"
-                        >
-                          ×
-                        </button>
                       </div>
                     ))}
                   </div>
