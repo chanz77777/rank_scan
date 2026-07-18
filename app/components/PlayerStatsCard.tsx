@@ -172,7 +172,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           'w-full',
           'rounded-[9px] border border-slate-700/60',
           'shadow-2xl overflow-hidden',
-          'flex flex-col aspect-[63/88] relative max-w-[350px] mx-auto',
+          'flex flex-col aspect-[63/88] relative max-w-[250px] mx-auto',
           // 💡 ティアに応じた専用のクラスを付与し、それ以外は標準のホバースケールを適用
           tier === 'champion'
             ? 'card-3d-champion'
