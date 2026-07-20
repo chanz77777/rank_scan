@@ -253,17 +253,17 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 </svg>
               </a>
               <p
-                className="text-[9px] font-bold mt-0.5"
+                className="text-[12px] font-bold mt-0.5"
                 style={textStrokeWhiteStyle}
               >
-                Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}
+                Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed} · {lifetimeStats.matches} matches
               </p>
             </div>
             {/* ランクアイコン */}
             <div className="text-base leading-none" title={deco.tierLabel}>
               {currentRankInfo?.imageUrl && (
                 <div
-                  className="w-9 h-9 bg-slate-950/90 rounded-full border border-slate-700/80 flex items-center justify-center backdrop-blur-sm p-0.5 shadow-lg"
+                  className="w-10 h-10 bg-slate-950/90 rounded-full border border-slate-700/80 flex items-center justify-center backdrop-blur-sm p-0.5 shadow-lg"
                   title={`Current Rank: ${currentRankInfo.rank}`}
                 >
                   <img src={currentRankInfo.imageUrl} alt={currentRankInfo.rank} className="w-full h-full object-contain" />
@@ -291,32 +291,32 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-1 text-center">
+            <div className="flex flex-col gap-1 text-center">
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
-                  className="text-[11px] font-black leading-tight"
+                  className="text-[14px] font-black leading-tight"
                   style={getWrColorStyle(currentSeason.winRate)}
                 >
                   {currentSeason.winRate.toFixed(1)}%
                 </p>
-                <p className="text-[7px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>Win%</p>
+                <p className="text-[10px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>Win%</p>
               </div>
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
-                  className="text-[11px] font-black leading-tight"
+                  className="text-[14px] font-black leading-tight"
                   style={getKdColorStyle(currentSeason.kd)}
                 >
                   {currentSeason.kd.toFixed(2)}
                 </p>
-                <p className="text-[7px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>K/D</p>
+                <p className="text-[10px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>K/D</p>
               </div>
               <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
                 <p
-                  className="text-[11px] font-black leading-tight"
+                  className="text-[14px] font-black leading-tight"
                 >
                   {currentSeason.matches}
                 </p>
-                <p className="text-[7px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>Games</p>
+                <p className="text-[10px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>Games</p>
               </div>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
             <div className="border-t border-slate-800/80 pt-1 flex items-center justify-between">
               <div className="flex items-center gap-1 min-w-0">
                 {bestPeak.rank.imageUrl && (
-                  <img src={bestPeak.rank.imageUrl} alt="Best Rank" className="w-5 h-5 object-contain flex-shrink-0" />
+                  <img src={bestPeak.rank.imageUrl} alt="Best Rank" className="w-8 h-8 object-contain flex-shrink-0" />
                 )}
                 <div className="min-w-0">
                   <p
@@ -336,7 +336,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                     Best Peak
                   </p>
                   <p
-                    className="text-[9px] font-extrabold mt-0.5 truncate leading-none"
+                    className="text-[12px] font-extrabold mt-0.5 truncate leading-none"
                     title={bestPeak.rank.rank}
                     style={textStrokeWhiteStyle}
                   >
@@ -347,7 +347,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               {/* 同率ベスト */}
               <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                 <span
-                  className="text-[7px] font-mono italic font-bold"
+                  className="text-[12px] font-mono italic font-bold"
                   title={`Peak Season: ${bestPeak.season}`}
                   style={textStrokeWhiteStyle}
                 >
