@@ -132,16 +132,34 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
   const seasonMeta = currentSeasonSeg?.metadata as Record<string, unknown> | undefined;
   const seasonShortName = (seasonMeta?.shortName as string) ?? `S${currentSeasonId}`;
 
-  const seasonMatches = currentSeasonSeg?.stats?.matchesPlayed?.value ?? 0;
-  const seasonWins = currentSeasonSeg?.stats?.matchesWon?.value ?? 0;
-  const seasonLosses = currentSeasonSeg?.stats?.matchesLost?.value ?? 0;
-  const seasonWinPct = currentSeasonSeg?.stats?.winPercentage?.value ?? 0;
-  const seasonKdRaw = currentSeasonSeg?.stats?.kdRatio?.value;
-  const seasonKills = currentSeasonSeg?.stats?.kills?.value ?? 0;
-  const seasonDeaths = currentSeasonSeg?.stats?.deaths?.value ?? 1;
-  const seasonKd = seasonKdRaw != null
-    ? parseFloat(seasonKdRaw.toFixed(2))
-    : (seasonDeaths > 0 ? parseFloat((seasonKills / seasonDeaths).toFixed(2)) : 0);
+  const rawSeasonMatches = currentSeasonSeg?.stats?.matchesPlayed?.value ?? 0;
+  const isFallback = rawSeasonMatches === 0;
+
+  let finalWinPct = currentSeasonSeg?.stats?.winPercentage?.value ?? 0;
+  let finalMatches = rawSeasonMatches;
+  let finalWins = currentSeasonSeg?.stats?.matchesWon?.value ?? 0;
+  let finalLosses = currentSeasonSeg?.stats?.matchesLost?.value ?? 0;
+  let finalKd = 0;
+
+  if (isFallback && overviewSeg) {
+    finalMatches = overviewSeg?.stats?.matchesPlayed?.value ?? 0;
+    finalWins = overviewSeg?.stats?.matchesWon?.value ?? 0;
+    finalLosses = overviewSeg?.stats?.matchesLost?.value ?? 0;
+    finalWinPct = overviewSeg?.stats?.winPercentage?.value ?? 0;
+    const ovKdRaw = overviewSeg?.stats?.kdRatio?.value;
+    const ovKills = overviewSeg?.stats?.kills?.value ?? 0;
+    const ovDeaths = overviewSeg?.stats?.deaths?.value ?? 1;
+    finalKd = ovKdRaw != null
+      ? parseFloat(ovKdRaw.toFixed(2))
+      : (ovDeaths > 0 ? parseFloat((ovKills / ovDeaths).toFixed(2)) : 0);
+  } else {
+    const seasonKdRaw = currentSeasonSeg?.stats?.kdRatio?.value;
+    const seasonKills = currentSeasonSeg?.stats?.kills?.value ?? 0;
+    const seasonDeaths = currentSeasonSeg?.stats?.deaths?.value ?? 1;
+    finalKd = seasonKdRaw != null
+      ? parseFloat(seasonKdRaw.toFixed(2))
+      : (seasonDeaths > 0 ? parseFloat((seasonKills / seasonDeaths).toFixed(2)) : 0);
+  }
 
   // 現在シーズンのランク情報を探す
   const currentRankPointsStat = currentSeasonSeg?.stats?.['rankPoints'] || currentSeasonSeg?.stats?.['rank'] || currentSeasonSeg?.stats?.['mmr'];
@@ -259,11 +277,12 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
       : undefined,
     currentSeason: {
       title: seasonShortName,
-      winRate: parseFloat(seasonWinPct.toFixed(1)),
-      kd: seasonKd,
-      matches: Math.round(seasonMatches),
-      wins: Math.round(seasonWins),
-      losses: Math.round(seasonLosses),
+      winRate: parseFloat(finalWinPct.toFixed(1)),
+      kd: finalKd,
+      matches: Math.round(finalMatches),
+      wins: Math.round(finalWins),
+      losses: Math.round(finalLosses),
+      isFallback,
     },
     lifetimeStats: {
       level: Math.round(level),

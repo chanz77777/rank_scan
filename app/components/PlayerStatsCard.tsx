@@ -29,24 +29,33 @@ const textStrokeWhiteStyle = {
 // K/D値に応じた色を返す（白の細い縁取りを維持したまま、中身に各色を適用）
 const getKdColorStyle = (kd: number) => {
   let color = '#f87171'; // red-400
-  if (kd >= 2.0) color = '#c084fc'; // purple-400
-  else if (kd >= 1.5) color = '#60a5fa'; // blue-400
-  else if (kd >= 1.0) color = '#4ade80'; // green-400
-  else if (kd >= 0.7) color = '#facc15'; // yellow-400
+  if (kd >= 1.5) color = '#c084fc'; // purple-400
+  else if (kd >= 1.0) color = '#4169e1'; // blue-400
+  else if (kd >= 0.8) color = '#006400'; // green-400
+  else if (kd >= 0.5) color = '#d2691e'; // yellow-400
 
   return {
     color: color,
     textShadow: '-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff',
   };
+};
+
+// K/D値のアイコンを返す
+const getKdIcon = (kd: number): string => {
+  if (kd >= 1.5) return colorToIcon('#c084fc');
+  if (kd >= 1.0) return colorToIcon('#4169e1');
+  if (kd >= 0.8) return colorToIcon('#006400');
+  if (kd >= 0.5) return colorToIcon('#d2691e');
+  return colorToIcon('#f87171');
 };
 
 // 勝率に応じた色を返す（白の細い縁取りを維持したまま、中身に各色を適用）
 const getWrColorStyle = (wr: number) => {
   let color = '#f87171'; // red-400
   if (wr >= 60) color = '#c084fc'; // purple-400
-  else if (wr >= 55) color = '#60a5fa'; // blue-400
-  else if (wr >= 50) color = '#4ade80'; // green-400
-  else if (wr >= 45) color = '#facc15'; // yellow-400
+  else if (wr >= 55) color = '#4169e1'; // blue-400
+  else if (wr >= 50) color = '#006400'; // green-400
+  else if (wr >= 30) color = '#d2691e'; // yellow-400
 
   return {
     color: color,
@@ -54,32 +63,46 @@ const getWrColorStyle = (wr: number) => {
   };
 };
 
-// 色名からアイコン絵文字を返す
-function colorToIcon(color: string): string {
-  if (color === '#c084fc') return '✨'; // purple
-  if (color === '#60a5fa') return '💧'; // blue
-  if (color === '#4ade80') return '🍃'; // green
-  if (color === '#facc15') return '⚡'; // yellow
-  return '🔥';                           // red (default)
-}
-
-// K/D値のアイコンを返す
-const getKdIcon = (kd: number): string => {
-  if (kd >= 2.0) return colorToIcon('#c084fc');
-  if (kd >= 1.5) return colorToIcon('#60a5fa');
-  if (kd >= 1.0) return colorToIcon('#4ade80');
-  if (kd >= 0.7) return colorToIcon('#facc15');
-  return colorToIcon('#f87171');
-};
-
 // 勝率のアイコンを返す
 const getWrIcon = (wr: number): string => {
   if (wr >= 60) return colorToIcon('#c084fc');
-  if (wr >= 55) return colorToIcon('#60a5fa');
-  if (wr >= 50) return colorToIcon('#4ade80');
-  if (wr >= 45) return colorToIcon('#facc15');
+  if (wr >= 55) return colorToIcon('#4169e1');
+  if (wr >= 50) return colorToIcon('#006400');
+  if (wr >= 30) return colorToIcon('#d2691e');
   return colorToIcon('#f87171');
 };
+
+// 試合数（GAMES）に応じた色を返す（白の細い縁取りを維持したまま、中身に各色を適用）
+const getGamesColorStyle = (games: number) => {
+  let color = '#f87171'; // red-400
+  if (games >= 5000) color = '#c084fc'; // purple-400
+  else if (games >= 3000) color = '#4169e1'; // blue-400
+  else if (games >= 1000) color = '#006400'; // green-400
+  else if (games >= 500) color = '#d2691e'; // yellow-400
+
+  return {
+    color: color,
+    textShadow: '-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff',
+  };
+};
+
+// 試合数（GAMES）のアイコンを返す
+const getGamesIcon = (games: number): string => {
+  if (games >= 5000) return colorToIcon('#c084fc');
+  if (games >= 3000) return colorToIcon('#4169e1');
+  if (games >= 1000) return colorToIcon('#006400');
+  if (games >= 500) return colorToIcon('#d2691e');
+  return colorToIcon('#f87171');
+};
+
+// 色名からアイコン絵文字を返す
+function colorToIcon(color: string): string {
+  if (color === '#c084fc') return '✨'; // purple
+  if (color === '#4169e1') return '💧'; // blue
+  if (color === '#006400') return '🍃'; // green
+  if (color === '#d2691e') return '⚡'; // yellow
+  return '🔥';                           // red (default)
+}
 
 export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank, avatarUrl, allSeasonRanks } = stats;
@@ -210,35 +233,61 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   }: {
     icon: string;
     label: string;
-    value: string;
+    value: React.ReactNode;
     valueStyle?: React.CSSProperties;
   }) => (
     <div
-      className="flex items-center gap-1 py-[3px] px-1.5 rounded"
-      style={{ background: 'rgba(15,23,42,0.45)', borderBottom: '1px solid rgba(148,163,184,0.12)' }}
+      className="flex items-center py-2 px-2 rounded"
+      style={{ background: 'rgba(15,23,42,0.45)', borderBottom: '1px solid rgba(148,163,184,0.15)' }}
     >
-      {/* 左端: 色対応アイコン */}
-      <span className="text-[13px] flex-shrink-0 leading-none w-5 text-center">{icon}</span>
-      {/* 中央: 項目名 */}
-      <span
-        className="flex-1 text-[9px] font-bold uppercase tracking-wide leading-none"
-        style={textStrokeWhiteStyle}
-      >
-        {label}
-      </span>
-      {/* 右端: 数値 */}
-      <span
-        className="text-[13px] font-black leading-none tabular-nums"
-        style={valueStyle ?? textStrokeWhiteStyle}
-      >
-        {value}
-      </span>
+      {/* 左ブロック: 色対応アイコン */}
+      <div className="w-8 flex-shrink-0 flex items-center justify-center">
+        <span className="text-[18px] leading-none">{icon}</span>
+      </div>
+      {/* 中央ブロック: 項目名 */}
+      <div className="flex-1 flex items-center justify-center">
+        <span
+          className="text-[11px] font-bold uppercase tracking-widest leading-none text-center"
+          style={textStrokeWhiteStyle}
+        >
+          {label}
+        </span>
+      </div>
+      {/* 右ブロック: 数値 */}
+      <div className="flex-shrink-0 flex items-center justify-end">
+        <span
+          className="text-[17px] font-black leading-none tabular-nums flex items-baseline"
+          style={valueStyle ?? textStrokeWhiteStyle}
+        >
+          {value}
+        </span>
+      </div>
     </div>
   );
 
-  // 勝率・K/Dのアイコンを事前計算
-  const wrIcon = getWrIcon(currentSeason.winRate);
-  const kdIcon = getKdIcon(currentSeason.kd);
+  const isFallback = currentSeason.isFallback;
+  const gamesCount = lifetimeStats.matches;
+
+  // 勝率・K/D・Gamesのアイコンとスタイルを事前計算
+  const wrIcon = isFallback ? '☠️' : getWrIcon(currentSeason.winRate);
+  const kdIcon = isFallback ? '☠️' : getKdIcon(currentSeason.kd);
+  const gamesIcon = getGamesIcon(gamesCount);
+
+  const wrStyle = isFallback ? textStrokeWhiteStyle : getWrColorStyle(currentSeason.winRate);
+  const kdStyle = isFallback ? textStrokeWhiteStyle : getKdColorStyle(currentSeason.kd);
+  const gamesStyle = getGamesColorStyle(gamesCount);
+
+  // 今シーズンの Ranked がある場合は () 内に今シーズンの試合数を追記
+  const gamesValue = !isFallback && currentSeason.matches > 0 ? (
+    <span>
+      {gamesCount}
+      <span className="text-[12px] font-bold opacity-90 ml-0.5">
+        ({currentSeason.matches})
+      </span>
+    </span>
+  ) : (
+    String(gamesCount)
+  );
 
   return (
     // ────────────────────────────────────────────────────────────────────────
@@ -365,7 +414,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                   className="text-[9px] font-bold leading-tight mt-0"
                   style={textStrokeWhiteStyle}
                 >
-                  Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed} · {lifetimeStats.matches}matches
+                  Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}
                 </p>
               </div>
             </div>
@@ -409,23 +458,24 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
               中段: ポケモンカード「技」欄風ステータス
               アイコン | 項目名 | 数値  の3カラム
               ══════════════════════════════════════════════════════ */}
-          <div className="flex flex-col gap-[3px]">
+          <div className="flex flex-col gap-1.5">
             <StatRow
               icon={wrIcon}
               label="WIN"
               value={`${currentSeason.winRate.toFixed(1)}%`}
-              valueStyle={getWrColorStyle(currentSeason.winRate)}
+              valueStyle={wrStyle}
             />
             <StatRow
               icon={kdIcon}
               label="K/D"
               value={currentSeason.kd.toFixed(2)}
-              valueStyle={getKdColorStyle(currentSeason.kd)}
+              valueStyle={kdStyle}
             />
             <StatRow
-              icon="🎮"
+              icon={gamesIcon}
               label="GAMES"
-              value={String(currentSeason.matches)}
+              value={gamesValue}
+              valueStyle={gamesStyle}
             />
           </div>
 

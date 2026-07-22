@@ -17,6 +17,7 @@ export interface SeasonStats {
   matches: number; // マッチ数
   wins?: number; // 勝利数（任意）
   losses?: number; // 敗北数（任意）
+  isFallback?: boolean; // 今シーズンのランク戦データがない場合（Lifetime Unranked + Quick Match 等のデータ）
 }
 
 /** 生涯戦績（Lifetime Overall） */
