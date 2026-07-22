@@ -32,7 +32,7 @@ const getKdColorStyle = (kd: number) => {
   if (kd >= 1.5) color = '#c084fc'; // purple-400
   else if (kd >= 1.0) color = '#4169e1'; // blue-400
   else if (kd >= 0.8) color = '#006400'; // green-400
-  else if (kd >= 0.5) color = '#d2691e'; // yellow-400
+  else if (kd >= 0.5) color = '#ffd700'; // yellow-400
 
   return {
     color: color,
@@ -45,7 +45,7 @@ const getKdIcon = (kd: number): string => {
   if (kd >= 1.5) return colorToIcon('#c084fc');
   if (kd >= 1.0) return colorToIcon('#4169e1');
   if (kd >= 0.8) return colorToIcon('#006400');
-  if (kd >= 0.5) return colorToIcon('#d2691e');
+  if (kd >= 0.5) return colorToIcon('#ffd700');
   return colorToIcon('#f87171');
 };
 
@@ -55,7 +55,7 @@ const getWrColorStyle = (wr: number) => {
   if (wr >= 60) color = '#c084fc'; // purple-400
   else if (wr >= 55) color = '#4169e1'; // blue-400
   else if (wr >= 50) color = '#006400'; // green-400
-  else if (wr >= 30) color = '#d2691e'; // yellow-400
+  else if (wr >= 30) color = '#ffd700'; // yellow-400
 
   return {
     color: color,
@@ -68,7 +68,7 @@ const getWrIcon = (wr: number): string => {
   if (wr >= 60) return colorToIcon('#c084fc');
   if (wr >= 55) return colorToIcon('#4169e1');
   if (wr >= 50) return colorToIcon('#006400');
-  if (wr >= 30) return colorToIcon('#d2691e');
+  if (wr >= 30) return colorToIcon('#ffd700');
   return colorToIcon('#f87171');
 };
 
@@ -78,7 +78,7 @@ const getGamesColorStyle = (games: number) => {
   if (games >= 5000) color = '#c084fc'; // purple-400
   else if (games >= 3000) color = '#4169e1'; // blue-400
   else if (games >= 1000) color = '#006400'; // green-400
-  else if (games >= 500) color = '#d2691e'; // yellow-400
+  else if (games >= 500) color = '#ffd700'; // yellow-400
 
   return {
     color: color,
@@ -91,7 +91,7 @@ const getGamesIcon = (games: number): string => {
   if (games >= 5000) return colorToIcon('#c084fc');
   if (games >= 3000) return colorToIcon('#4169e1');
   if (games >= 1000) return colorToIcon('#006400');
-  if (games >= 500) return colorToIcon('#d2691e');
+  if (games >= 500) return colorToIcon('#ffd700');
   return colorToIcon('#f87171');
 };
 
@@ -100,7 +100,7 @@ function colorToIcon(color: string): string {
   if (color === '#c084fc') return '✨'; // purple
   if (color === '#4169e1') return '💧'; // blue
   if (color === '#006400') return '🍃'; // green
-  if (color === '#d2691e') return '⚡'; // yellow
+  if (color === '#ffd700') return '⚡'; // yellow
   return '🔥';                           // red (default)
 }
 
