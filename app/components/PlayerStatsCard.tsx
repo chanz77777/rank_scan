@@ -54,16 +54,64 @@ const getWrColorStyle = (wr: number) => {
   };
 };
 
+// 色名からアイコン絵文字を返す
+function colorToIcon(color: string): string {
+  if (color === '#c084fc') return '✨'; // purple
+  if (color === '#60a5fa') return '💧'; // blue
+  if (color === '#4ade80') return '🍃'; // green
+  if (color === '#facc15') return '⚡'; // yellow
+  return '🔥';                           // red (default)
+}
+
+// K/D値のアイコンを返す
+const getKdIcon = (kd: number): string => {
+  if (kd >= 2.0) return colorToIcon('#c084fc');
+  if (kd >= 1.5) return colorToIcon('#60a5fa');
+  if (kd >= 1.0) return colorToIcon('#4ade80');
+  if (kd >= 0.7) return colorToIcon('#facc15');
+  return colorToIcon('#f87171');
+};
+
+// 勝率のアイコンを返す
+const getWrIcon = (wr: number): string => {
+  if (wr >= 60) return colorToIcon('#c084fc');
+  if (wr >= 55) return colorToIcon('#60a5fa');
+  if (wr >= 50) return colorToIcon('#4ade80');
+  if (wr >= 45) return colorToIcon('#facc15');
+  return colorToIcon('#f87171');
+};
+
 export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
-  const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank } = stats;
+  const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank, avatarUrl, allSeasonRanks } = stats;
   const trackerUrl = `https://r6.tracker.network/r6siege/profile/ubi/${encodeURIComponent(ubiId)}/overview`;
 
-  // 現在ランク: 明示フィールド → seasonPeaksの最初のエントリ の順にフォールバック
-  const currentRankInfo = currentRank ?? seasonPeaks[0]?.rank;
+  // 現在ランク: 明示フィールド → allSeasonRanks[0] の順にフォールバック
+  const currentRankInfo = currentRank ?? allSeasonRanks[0]?.rank;
 
-  // ベストピーク: 全 seasonPeaks の中で最高 MMR を持つもの
+  // ランク名からスコアを計算するローカルヘルパー（route.tsのロジックと同等）
+  const rankScore = (rankName: string): number => {
+    const upper = (rankName ?? '').toUpperCase().trim();
+    let base = 0;
+    if (upper.startsWith('CHAMPION')) base = 70;
+    else if (upper.startsWith('DIAMOND')) base = 58;
+    else if (upper.startsWith('EMERALD')) base = 46;
+    else if (upper.startsWith('PLATINUM')) base = 34;
+    else if (upper.startsWith('GOLD')) base = 24;
+    else if (upper.startsWith('SILVER')) base = 14;
+    else if (upper.startsWith('BRONZE')) base = 6;
+    else if (upper.startsWith('COPPER')) base = 2;
+    const m = upper.match(/(\d)$/);
+    const sub = m ? (parseInt(m[1], 10) === 1 ? 4 : parseInt(m[1], 10) === 2 ? 2 : 0) : 2;
+    return base + sub;
+  };
+
+  // ベストピーク: ランク階級スコアが最高のシーズン（同点ならMMRが高い方）
   const bestPeak = seasonPeaks.reduce<typeof seasonPeaks[number] | undefined>((best, p) => {
-    if (!best || p.rank.mmr > best.rank.mmr) return p;
+    if (!best) return p;
+    const bScore = rankScore(best.rank.rank);
+    const pScore = rankScore(p.rank.rank);
+    if (pScore > bScore) return p;
+    if (pScore === bScore && p.rank.mmr > best.rank.mmr) return p;
     return best;
   }, undefined);
 
@@ -151,6 +199,47 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
     cardRef.current.style.setProperty('--holo-hyp', '0.6');
   };
 
+  // ────────────────────────────────────────────────────────────────────────
+  // ポケモンカード技欄風ステータス行
+  // ────────────────────────────────────────────────────────────────────────
+  const StatRow = ({
+    icon,
+    label,
+    value,
+    valueStyle,
+  }: {
+    icon: string;
+    label: string;
+    value: string;
+    valueStyle?: React.CSSProperties;
+  }) => (
+    <div
+      className="flex items-center gap-1 py-[3px] px-1.5 rounded"
+      style={{ background: 'rgba(15,23,42,0.45)', borderBottom: '1px solid rgba(148,163,184,0.12)' }}
+    >
+      {/* 左端: 色対応アイコン */}
+      <span className="text-[13px] flex-shrink-0 leading-none w-5 text-center">{icon}</span>
+      {/* 中央: 項目名 */}
+      <span
+        className="flex-1 text-[9px] font-bold uppercase tracking-wide leading-none"
+        style={textStrokeWhiteStyle}
+      >
+        {label}
+      </span>
+      {/* 右端: 数値 */}
+      <span
+        className="text-[13px] font-black leading-none tabular-nums"
+        style={valueStyle ?? textStrokeWhiteStyle}
+      >
+        {value}
+      </span>
+    </div>
+  );
+
+  // 勝率・K/Dのアイコンを事前計算
+  const wrIcon = getWrIcon(currentSeason.winRate);
+  const kdIcon = getKdIcon(currentSeason.kd);
+
   return (
     // ────────────────────────────────────────────────────────────────────────
     // 外側ラッパー: ティア別グラデーションボーダーを担う
@@ -226,41 +315,63 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
         {/* ────────────────────────────────────────────────────────────────
             コンテンツ（relative z-10）- z-indexを上げてホログラムの上に配置します
             ──────────────────────────────────────────────────────────────── */}
-        <div className="flex-1 p-2 flex flex-col justify-between overflow-hidden relative z-10 select-none">
-          {/* 上段: 名前・基本情報 */}
+        <div className="flex-1 p-2 flex flex-col overflow-hidden relative z-10 select-none">
+
+          {/* ══════════════════════════════════════════════════════
+              上段: 名前・Lv情報 + アバター + 現在ランク
+              ポケモンカードのヘッダー欄に相当
+              ══════════════════════════════════════════════════════ */}
           <div className="flex items-start justify-between gap-1">
-            <div className="min-w-0">
-              <a
-                href={trackerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group/link flex items-center gap-1 w-fit"
-                title="tracker.gg で開く"
-              >
-                <h2
-                  className={[
-                    'font-extrabold tracking-wide truncate max-w-[110px] group-hover/link:opacity-80 transition-all drop-shadow',
-                  ].join(' ')}
-                  style={{
-                    ...textStrokeWhiteStyle,
-                  }}
-                  title={username}
+            {/* 左: アバター + 名前・Lv情報 (縦に詰める) */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {/* アバター: 名前行のすぐ左に配置 */}
+              <div className="flex-shrink-0">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    className="w-9 h-9 rounded-full object-cover border border-slate-600/80 shadow-md"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center gap-0.5 border border-slate-700">
+                    <span className="text-sm">🎮</span>
+                  </div>
+                )}
+              </div>
+              {/* 名前・Lv情報 */}
+              <div className="min-w-0">
+                <a
+                  href={trackerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/link flex items-center gap-1 w-fit"
+                  title="tracker.gg で開く"
                 >
-                  {username}
-                </h2>
-                <svg className="w-3 h-3 opacity-80 group-hover/link:opacity-100 flex-shrink-0 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ stroke: '#ffffff' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-              <p
-                className="text-[12px] font-bold mt-0.5"
-                style={textStrokeWhiteStyle}
-              >
-                Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed} · {lifetimeStats.matches} matches
-              </p>
+                  <h2
+                    className={[
+                      'font-extrabold tracking-wide truncate max-w-[90px] group-hover/link:opacity-80 transition-all drop-shadow text-[13px]',
+                    ].join(' ')}
+                    style={{
+                      ...textStrokeWhiteStyle,
+                    }}
+                    title={username}
+                  >
+                    {username}
+                  </h2>
+                  <svg className="w-2.5 h-2.5 opacity-80 group-hover/link:opacity-100 flex-shrink-0 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ stroke: '#ffffff' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+                <p
+                  className="text-[9px] font-bold leading-tight mt-0"
+                  style={textStrokeWhiteStyle}
+                >
+                  Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed} · {lifetimeStats.matches}matches
+                </p>
+              </div>
             </div>
-            {/* ランクアイコン */}
-            <div className="text-base leading-none" title={deco.tierLabel}>
+
+            {/* 右: 現在ランクアイコン */}
+            <div className="flex-shrink-0" title={deco.tierLabel}>
               {currentRankInfo?.imageUrl && (
                 <div
                   className="w-10 h-10 bg-slate-950/90 rounded-full border border-slate-700/80 flex items-center justify-center backdrop-blur-sm p-0.5 shadow-lg"
@@ -272,93 +383,128 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
             </div>
           </div>
 
-          {/* 中段: 今シーズンの戦績 */}
-          <div className="my-0.5">
-            <div className="flex justify-between items-center mb-0.5">
+          {/* シーズンタイトル + 現在ランク名 */}
+          <div className="flex justify-between items-center px-0.5">
+            <span
+              className="text-[8px] font-bold tracking-wider uppercase"
+              style={textStrokeWhiteStyle}
+            >
+              {currentSeason.title}
+            </span>
+            {currentRankInfo && (
               <span
-                className="text-[8px] font-bold tracking-wider uppercase"
+                className="text-[8px] font-extrabold truncate max-w-[80px]"
+                title={currentRankInfo.rank}
                 style={textStrokeWhiteStyle}
               >
-                {currentSeason.title}
+                {currentRankInfo.rank}
               </span>
-              {currentRankInfo && (
-                <span
-                  className="text-[8px] font-extrabold truncate max-w-[80px]"
-                  title={currentRankInfo.rank}
-                  style={textStrokeWhiteStyle}
-                >
-                  {currentRankInfo.rank}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 text-center">
-              <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
-                <p
-                  className="text-[14px] font-black leading-tight"
-                  style={getWrColorStyle(currentSeason.winRate)}
-                >
-                  {currentSeason.winRate.toFixed(1)}%
-                </p>
-                <p className="text-[10px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>Win%</p>
-              </div>
-              <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
-                <p
-                  className="text-[14px] font-black leading-tight"
-                  style={getKdColorStyle(currentSeason.kd)}
-                >
-                  {currentSeason.kd.toFixed(2)}
-                </p>
-                <p className="text-[10px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>K/D</p>
-              </div>
-              <div className="bg-slate-950/40 border border-slate-700/40 rounded py-0.5 px-0.5 backdrop-blur-[1px]">
-                <p
-                  className="text-[14px] font-black leading-tight"
-                >
-                  {currentSeason.matches}
-                </p>
-                <p className="text-[10px] text-white font-bold uppercase leading-none" style={{ textShadow: '1px 1px 1px #000' }}>Games</p>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* 下段: BEST PEAK ランク */}
+          {/* スペーサー: ステータスを下寄りに押し下げる */}
+          <div className="flex-1" />
+
+          {/* ══════════════════════════════════════════════════════
+              中段: ポケモンカード「技」欄風ステータス
+              アイコン | 項目名 | 数値  の3カラム
+              ══════════════════════════════════════════════════════ */}
+          <div className="flex flex-col gap-[3px]">
+            <StatRow
+              icon={wrIcon}
+              label="WIN"
+              value={`${currentSeason.winRate.toFixed(1)}%`}
+              valueStyle={getWrColorStyle(currentSeason.winRate)}
+            />
+            <StatRow
+              icon={kdIcon}
+              label="K/D"
+              value={currentSeason.kd.toFixed(2)}
+              valueStyle={getKdColorStyle(currentSeason.kd)}
+            />
+            <StatRow
+              icon="🎮"
+              label="GAMES"
+              value={String(currentSeason.matches)}
+            />
+          </div>
+
+          {/* ══════════════════════════════════════════════════════
+              下段: ポケモンカード「弱点/にげる」欄風ランク表示
+              1行で: [BEST ラベル][アイコン][ランク名]  ...スペーサー...  [ALLアイコン横並び]
+              ══════════════════════════════════════════════════════ */}
           {bestPeak && (
-            <div className="border-t border-slate-800/80 pt-1 flex items-center justify-between">
-              <div className="flex items-center gap-1 min-w-0">
-                {bestPeak.rank.imageUrl && (
-                  <img src={bestPeak.rank.imageUrl} alt="Best Rank" className="w-8 h-8 object-contain flex-shrink-0" />
-                )}
-                <div className="min-w-0">
-                  <p
-                    className="text-[7px] font-bold uppercase leading-none"
-                    style={textStrokeWhiteStyle}
-                  >
-                    Best Peak
-                  </p>
-                  <p
-                    className="text-[12px] font-extrabold mt-0.5 truncate leading-none"
-                    title={bestPeak.rank.rank}
-                    style={textStrokeWhiteStyle}
-                  >
-                    {bestPeak.rank.rank}
-                  </p>
-                </div>
-              </div>
-              {/* 同率ベスト */}
-              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+            <div className="border-t border-slate-700/60 pt-1">
+              <div className="flex items-center gap-1">
+                {/* 左: BEST ラベル + ランクアイコン + ランク名 */}
                 <span
-                  className="text-[12px] font-mono italic font-bold"
-                  title={`Peak Season: ${bestPeak.season}`}
+                  className="text-[7px] font-bold uppercase tracking-wider flex-shrink-0"
                   style={textStrokeWhiteStyle}
                 >
-                  {bestPeak.season}
+                  BEST
                 </span>
-                {seasonPeaks.length > 1 && (
+                {bestPeak.rank.imageUrl && (
+                  <img
+                    src={bestPeak.rank.imageUrl}
+                    alt={bestPeak.rank.rank}
+                    className="w-6 h-6 object-contain flex-shrink-0"
+                    title={bestPeak.rank.rank}
+                  />
+                )}
+                <span
+                  className="text-[9px] font-extrabold truncate leading-none flex-shrink min-w-0"
+                  title={bestPeak.rank.rank}
+                  style={textStrokeWhiteStyle}
+                >
+                  {bestPeak.rank.rank}
+                </span>
+
+                {/* スペーサー */}
+                <div className="flex-1" />
+
+                {/* 右: ALL ラベル + 全シーズンのアイコン横並び（ポケモンカード「にげる」欄） */}
+                {allSeasonRanks.length > 1 ? (
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <span
+                      className="text-[7px] font-bold uppercase tracking-wider"
+                      style={textStrokeWhiteStyle}
+                    >
+                      ALL
+                    </span>
+                    {allSeasonRanks.map((peak) => (
+                      <div
+                        key={peak.season}
+                        className="relative group/rank flex-shrink-0"
+                        title={`${peak.rank.rank} (${peak.season})`}
+                      >
+                        {peak.rank.imageUrl ? (
+                          <img
+                            src={peak.rank.imageUrl}
+                            alt={peak.rank.rank}
+                            className="w-5 h-5 object-contain"
+                          />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-slate-700/60 flex items-center justify-center">
+                            <span className="text-[8px] text-slate-300 font-bold leading-none">
+                              {peak.rank.rank.slice(0, 1)}
+                            </span>
+                          </div>
+                        )}
+                        {/* ホバー時シーズン名ツールチップ */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0.5 px-1 py-0.5 bg-slate-900/95 border border-slate-600/60 rounded text-[7px] text-white font-mono whitespace-nowrap opacity-0 group-hover/rank:opacity-100 transition-opacity pointer-events-none z-50">
+                          {peak.season}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* allSeasonRanks が1件のみ → シーズン名を右端に表示 */
                   <span
-                    className="text-[6px] font-mono font-bold"
+                    className="text-[9px] font-mono italic font-bold flex-shrink-0"
+                    title={`Peak Season: ${bestPeak.season}`}
                     style={textStrokeWhiteStyle}
                   >
-                    +{seasonPeaks.length - 1} more
+                    {bestPeak.season}
                   </span>
                 )}
               </div>

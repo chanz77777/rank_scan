@@ -201,7 +201,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     return base === highestBaseScore && sub === highestSubBonus && highestBaseScore > 0;
   });
 
-  // SeasonPeak[] に変換
+  // SeasonPeak[] に変換（最高ランク階級と同等のシーズンのみ）
   const peaks = bestPeakSeasons.map((s) => {
     const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
     const val = stat?.value ?? 0;
@@ -222,6 +222,32 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
       rank: { rank: currentRankName, mmr: Math.round(currentRankVal), imageUrl: currentRankImg },
     });
   }
+
+  // 全ランク済みシーズン（NO RANK を除く）を allSeasonRanks として整備
+  const allSeasonRanks = sortedRankedSeasons.map((s) => {
+    const stat = s.stats?.maxRankPoints || s.stats?.rankPoints || s.stats?.mmr;
+    if (!stat) return null;
+    const val = stat?.value ?? 0;
+    const meta = stat?.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
+    const rName = meta?.name || meta?.tierName || '';
+    const rImg  = meta?.imageUrl || '';
+    const sName = (s.metadata?.shortName as string) ?? `S${s.attributes?.season}`;
+    if (!rName || rName === 'NO RANK') return null;
+    return {
+      season: sName,
+      rank: { rank: rName, mmr: Math.round(val), imageUrl: rImg },
+    };
+  }).filter((p): p is NonNullable<typeof p> => p !== null);
+
+  // allSeasonRanks の重複シーズンを除去（同一シーズン名が複数ある場合は最高MMRのもののみ残す）
+  const seenSeasons = new Map<string, typeof allSeasonRanks[number]>();
+  for (const entry of allSeasonRanks) {
+    const existing = seenSeasons.get(entry.season);
+    if (!existing || entry.rank.mmr > existing.rank.mmr) {
+      seenSeasons.set(entry.season, entry);
+    }
+  }
+  const dedupedAllSeasonRanks = Array.from(seenSeasons.values());
 
   return {
     ubiId,
@@ -245,6 +271,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
       timePlayed: timePlayedDisplay,
     },
     seasonPeaks: peaks,
+    allSeasonRanks: dedupedAllSeasonRanks,
   };
 }
 
