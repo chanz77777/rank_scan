@@ -412,7 +412,7 @@ export default function Home() {
 
   return (
     <main
-      className="relative min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+      className="relative min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -432,9 +432,9 @@ export default function Home() {
       <div className="py-8 px-4">
         {/* ヘッダー */}
         <div className="max-w-7xl mx-auto mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-white drop-shadow-lg">R6 Siege Stats Dashboard</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">R6 Siege Stats Dashboard</h1>
               <p className="text-slate-400 text-sm mt-1">
                 {isLoading ? (
                   <span className="text-blue-400 animate-pulse">{statusMsg || '処理中...'}</span>
@@ -445,33 +445,34 @@ export default function Home() {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Gemini API Key 入力欄 */}
-              <div className="relative flex items-center bg-slate-800/85 border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition-all duration-200 shadow-inner">
-                <span className="text-xs text-slate-400 mr-2 font-semibold select-none">Gemini API:</span>
-                <input
-                  type={showApiKey ? 'text' : 'password'}
-                  placeholder="APIキーを入力..."
-                  value={geminiApiKey}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setGeminiApiKey(val);
-                    localStorage.setItem('gemini_api_key', val);
-                  }}
-                  className="bg-transparent border-none text-white text-xs outline-none w-32 focus:ring-0 placeholder-slate-600 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="text-slate-500 hover:text-slate-300 ml-1.5 focus:outline-none text-xs"
-                  title={showApiKey ? '非表示' : '表示'}
-                >
-                  {showApiKey ? '🙈' : '👁️'}
-                </button>
-              </div>
+            {/* Gemini API Key 入力欄（単独行） */}
+            <div className="relative flex items-center bg-slate-800/85 border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition-all duration-200 shadow-inner w-full sm:w-fit">
+              <span className="text-xs text-slate-400 mr-2 font-semibold select-none whitespace-nowrap">Gemini API:</span>
+              <input
+                type={showApiKey ? 'text' : 'password'}
+                placeholder="APIキーを入力..."
+                value={geminiApiKey}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setGeminiApiKey(val);
+                  localStorage.setItem('gemini_api_key', val);
+                }}
+                className="bg-transparent border-none text-white text-xs outline-none w-full min-w-0 sm:w-32 focus:ring-0 placeholder-slate-600 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="text-slate-500 hover:text-slate-300 ml-1.5 focus:outline-none text-xs shrink-0"
+                title={showApiKey ? '非表示' : '表示'}
+              >
+                {showApiKey ? '🙈' : '👁️'}
+              </button>
+            </div>
 
+            {/* ファイル選択ボタン + 切り抜きトグル */}
+            <div className="flex flex-wrap items-center gap-3">
               {/* ファイル選択ボタン */}
-              <label className="relative cursor-pointer">
+              <label className="relative cursor-pointer shrink-0">
                 <input
                   type="file"
                   accept="image/jpeg,image/png"
@@ -480,8 +481,7 @@ export default function Home() {
                   id="file-input"
                 />
                 <span
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg text-sm flex items-center gap-2 cursor-pointer"
-                  onClick={() => document.getElementById('file-input')?.click()}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg text-sm flex items-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   📂 ファイルを選択
                 </span>
@@ -544,7 +544,7 @@ export default function Home() {
                     <span className="inline-block w-2 h-2 rounded-full bg-red-400"></span>
                     敵チーム ({enemies.length}人)
                   </h2>
-                  <div className="grid grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
                     {enemies.map((player) => (
                       <div key={player.ubiId} className="relative group">
                         <PlayerStatsCard stats={player} />
