@@ -26,7 +26,26 @@ const textStrokeWhiteStyle = {
   `,
 };
 
-// K/D値に応じた色を返す（白の細い縁取りを維持したまま、中身に各色を適用）
+// 色文字に「内側：細い黒縁取り」＋「外側：白縁取り」を施すダブルアウトラインスタイル
+const getColoredDoubleStrokeStyle = (color: string) => ({
+  color: color,
+  textShadow: `
+    -0.5px -0.5px 0 #000000,
+     0.5px -0.5px 0 #000000,
+    -0.5px  0.5px 0 #000000,
+     0.5px  0.5px 0 #000000,
+    -2px -2px 0 #ffffff,
+     0px -2px 0 #ffffff,
+     2px -2px 0 #ffffff,
+    -2px  0px 0 #ffffff,
+     2px  0px 0 #ffffff,
+    -2px  2px 0 #ffffff,
+     0px  2px 0 #ffffff,
+     2px  2px 0 #ffffff
+  `,
+});
+
+// K/D値に応じた色を返す（色文字 + 内側黒縁 + 外側白縁）
 const getKdColorStyle = (kd: number) => {
   let color = '#f87171'; // red-400
   if (kd >= 1.5) color = '#c084fc'; // purple-400
@@ -34,10 +53,7 @@ const getKdColorStyle = (kd: number) => {
   else if (kd >= 0.8) color = '#006400'; // green-400
   else if (kd >= 0.5) color = '#ffd700'; // yellow-400
 
-  return {
-    color: color,
-    textShadow: '-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff',
-  };
+  return getColoredDoubleStrokeStyle(color);
 };
 
 // K/D値のアイコンを返す
@@ -49,7 +65,7 @@ const getKdIcon = (kd: number): string => {
   return colorToIcon('#f87171');
 };
 
-// 勝率に応じた色を返す（白の細い縁取りを維持したまま、中身に各色を適用）
+// 勝率に応じた色を返す（色文字 + 内側黒縁 + 外側白縁）
 const getWrColorStyle = (wr: number) => {
   let color = '#f87171'; // red-400
   if (wr >= 60) color = '#c084fc'; // purple-400
@@ -57,10 +73,7 @@ const getWrColorStyle = (wr: number) => {
   else if (wr >= 50) color = '#006400'; // green-400
   else if (wr >= 30) color = '#ffd700'; // yellow-400
 
-  return {
-    color: color,
-    textShadow: '-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff',
-  };
+  return getColoredDoubleStrokeStyle(color);
 };
 
 // 勝率のアイコンを返す
@@ -72,7 +85,7 @@ const getWrIcon = (wr: number): string => {
   return colorToIcon('#f87171');
 };
 
-// 試合数（GAMES）に応じた色を返す（白の細い縁取りを維持したまま、中身に各色を適用）
+// 試合数（GAMES）に応じた色を返す（色文字 + 内側黒縁 + 外側白縁）
 const getGamesColorStyle = (games: number) => {
   let color = '#f87171'; // red-400
   if (games >= 5000) color = '#c084fc'; // purple-400
@@ -80,10 +93,7 @@ const getGamesColorStyle = (games: number) => {
   else if (games >= 1000) color = '#006400'; // green-400
   else if (games >= 500) color = '#ffd700'; // yellow-400
 
-  return {
-    color: color,
-    textShadow: '-1px -1px 0 #ffffff, 1px -1px 0 #ffffff, -1px 1px 0 #ffffff, 1px 1px 0 #ffffff',
-  };
+  return getColoredDoubleStrokeStyle(color);
 };
 
 // 試合数（GAMES）のアイコンを返す
