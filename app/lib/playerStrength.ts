@@ -98,18 +98,15 @@ function parsePlaytimeHours(timePlayed: string): number {
 }
 
 /**
- * プレイ時間（時間数）→ ボーナス点（最大 20点）
- * 4桁（1000h以上）はかなり強いとみなし大幅加点
+ * プレイ回数→ ボーナス点
  */
 function playtimeBonus(timePlayed: string): number {
   const hours = parsePlaytimeHours(timePlayed);
-  if (hours >= 5000) return 50; // 超ベテラン
-  if (hours >= 3000) return 30;
-  if (hours >= 2000) return 25;
-  if (hours >= 1000) return 20; // 4桁 = かなり強い
-  if (hours >= 500) return 15;
-  if (hours >= 200) return 10;
-  if (hours >= 50) return 1;
+  if (hours >= 5000) return 20;
+  if (hours >= 3000) return 10;
+  if (hours >= 2000) return 5;
+  if (hours >= 1000) return 2;
+  if (hours >= 500) return 1;
   return 0;
 }
 
@@ -117,13 +114,13 @@ function playtimeBonus(timePlayed: string): number {
 // K/D ボーナス
 // ────────────────────────────────────────────────────────────────────────────
 
-/** K/D 比 → ボーナス点（最大 5点） */
+/** K/D 比 → ボーナス点 */
 function kdBonus(kd: number): number {
-  if (kd >= 2.5) return 5;
-  if (kd >= 2.0) return 4;
-  if (kd >= 1.5) return 3;
-  if (kd >= 1.2) return 2;
-  if (kd >= 1.0) return 1;
+  if (kd >= 1.5) return 20;
+  if (kd >= 1.0) return 10;
+  if (kd >= 0.8) return 5;
+  if (kd >= 0.5) return 2;
+  if (kd >= 0.3) return 1;
   return 0;
 }
 
@@ -135,10 +132,10 @@ function kdBonus(kd: number): number {
  * PlayerStats から強さスコア（0〜100 程度）を算出する。
  *
  * 配点:
- *   ベストランク:   最大 74点（ランク 70 + サブボーナス 4）
- *   現在ランク:     最大 10点（上乗せ補正）
- *   プレイ時間:     最大 10点
- *   K/D比:         最大  5点
+ *   ベストランク:   
+ *   現在ランク:     
+ *   プレイ回数:     
+ *   K/D比:         
  */
 export function calcStrengthScore(stats: PlayerStats): number {
   // 1. ベストランクスコア（seasonPeaks の中で最高 MMR を持つものを採用）
@@ -156,8 +153,8 @@ export function calcStrengthScore(stats: PlayerStats): number {
     ? Math.round((currentRankScore / Math.max(bestRankScore, 1)) * 10)
     : 0;
 
-  // 3. プレイ時間ボーナス
-  const ptBonus = playtimeBonus(stats.lifetimeStats.timePlayed);
+  // 3. プレイ回数ボーナス
+  const ptBonus = playtimeBonus(stats.lifetimeStats.matches.toString());
 
   // 4. K/D ボーナス
   const kd = stats.currentSeason.kd;
@@ -175,13 +172,13 @@ export function calcStrengthScore(stats: PlayerStats): number {
  * Copper → Bronze → Silver → Gold → Platinum → Emerald → Diamond → Champion
  */
 export function getStrengthTier(score: number): StrengthTier {
-  if (score >= 85) return 'champion';
-  if (score >= 70) return 'diamond';
-  if (score >= 56) return 'emerald';
-  if (score >= 42) return 'platinum';
+  if (score >= 100) return 'champion';
+  if (score >= 80) return 'diamond';
+  if (score >= 60) return 'emerald';
+  if (score >= 50) return 'platinum';
   if (score >= 30) return 'gold';
-  if (score >= 18) return 'silver';
-  if (score >= 9) return 'bronze';
+  if (score >= 20) return 'silver';
+  if (score >= 10) return 'bronze';
   return 'copper';
 }
 
@@ -233,7 +230,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'emerald':
       return {
         tier,
-        wrapperClassName: 'animate-float',
+        wrapperClassName: '',
         wrapperStyle: {},
         cardClassName: 'animate-bg-flow',
         cardStyle: {

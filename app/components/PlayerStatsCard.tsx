@@ -97,10 +97,10 @@ const getGamesIcon = (games: number): string => {
 
 // 色名からアイコン絵文字を返す
 function colorToIcon(color: string): string {
-  if (color === '#c084fc') return '✨'; // purple
-  if (color === '#4169e1') return '💧'; // blue
-  if (color === '#006400') return '🍃'; // green
-  if (color === '#ffd700') return '⚡'; // yellow
+  if (color === '#c084fc') return '✨✨✨✨✨'; // purple
+  if (color === '#4169e1') return '💧💧💧💧'; // blue
+  if (color === '#006400') return '🍃🍃🍃'; // green
+  if (color === '#ffd700') return '⚡⚡'; // yellow
   return '🔥';                           // red (default)
 }
 
@@ -237,26 +237,26 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
     valueStyle?: React.CSSProperties;
   }) => (
     <div
-      className="flex items-center py-2 px-2 rounded"
+      className="flex items-center py-2 px-2 rounded min-w-0"
       style={{ background: 'rgba(15,23,42,0.45)', borderBottom: '1px solid rgba(148,163,184,0.15)' }}
     >
-      {/* 左ブロック: 色対応アイコン */}
-      <div className="w-8 flex-shrink-0 flex items-center justify-center">
-        <span className="text-[18px] leading-none">{icon}</span>
+      {/* 左ブロック: 色対応アイコン（固定幅で絵文字数にかかわらず右側への押し出しを防ぐ） */}
+      <div className="w-[62px] flex-shrink-0 flex items-center justify-start overflow-hidden">
+        <span className="text-[12px] leading-none whitespace-nowrap tracking-tighter">{icon}</span>
       </div>
-      {/* 中央ブロック: 項目名 */}
-      <div className="flex-1 flex items-center justify-center">
+      {/* 中央ブロック: 項目名（固定幅でWIN / K/D / GAMESの見出し位置を縦一列に完全固定） */}
+      <div className="w-[50px] flex-shrink-0 flex items-center justify-center">
         <span
-          className="text-[11px] font-bold uppercase tracking-widest leading-none text-center"
+          className="text-[10px] font-bold uppercase tracking-wider leading-none text-center truncate"
           style={textStrokeWhiteStyle}
         >
           {label}
         </span>
       </div>
       {/* 右ブロック: 数値 */}
-      <div className="flex-shrink-0 flex items-center justify-end">
+      <div className="flex-1 flex items-center justify-end min-w-0">
         <span
-          className="text-[17px] font-black leading-none tabular-nums flex items-baseline"
+          className="text-[16px] font-black leading-none tabular-nums flex items-baseline whitespace-nowrap"
           style={valueStyle ?? textStrokeWhiteStyle}
         >
           {value}
