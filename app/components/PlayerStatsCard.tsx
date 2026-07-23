@@ -47,9 +47,9 @@ const getColoredDoubleStrokeStyle = (color: string) => ({
 
 // K/D値に応じた色を返す（色文字 + 内側黒縁 + 外側白縁）
 const getKdColorStyle = (kd: number) => {
-  let color = '#f87171'; // red-400
-  if (kd >= 1.5) color = '#c084fc'; // purple-400
-  else if (kd >= 1.0) color = '#4169e1'; // blue-400
+  let color = '#4169e1'; // red-400
+  if (kd >= 1.5) color = '#f87171'; // purple-400
+  else if (kd >= 1.0) color = '#c084fc'; // blue-400
   else if (kd >= 0.8) color = '#006400'; // green-400
   else if (kd >= 0.5) color = '#ffd700'; // yellow-400
 
@@ -58,18 +58,18 @@ const getKdColorStyle = (kd: number) => {
 
 // K/D値のアイコンを返す
 const getKdIcon = (kd: number): string => {
-  if (kd >= 1.5) return colorToIcon('#c084fc');
-  if (kd >= 1.0) return colorToIcon('#4169e1');
+  if (kd >= 1.5) return colorToIcon('#f87171');
+  if (kd >= 1.0) return colorToIcon('#c084fc');
   if (kd >= 0.8) return colorToIcon('#006400');
   if (kd >= 0.5) return colorToIcon('#ffd700');
-  return colorToIcon('#f87171');
+  return colorToIcon('#4169e1');
 };
 
 // 勝率に応じた色を返す（色文字 + 内側黒縁 + 外側白縁）
 const getWrColorStyle = (wr: number) => {
-  let color = '#f87171'; // red-400
-  if (wr >= 60) color = '#c084fc'; // purple-400
-  else if (wr >= 55) color = '#4169e1'; // blue-400
+  let color = '#4169e1'; // red-400
+  if (wr >= 70) color = '#f87171'; // purple-400
+  else if (wr >= 60) color = '#c084fc'; // blue-400
   else if (wr >= 50) color = '#006400'; // green-400
   else if (wr >= 30) color = '#ffd700'; // yellow-400
 
@@ -78,18 +78,18 @@ const getWrColorStyle = (wr: number) => {
 
 // 勝率のアイコンを返す
 const getWrIcon = (wr: number): string => {
+  if (wr >= 70) return colorToIcon('#f87171');
   if (wr >= 60) return colorToIcon('#c084fc');
-  if (wr >= 55) return colorToIcon('#4169e1');
   if (wr >= 50) return colorToIcon('#006400');
   if (wr >= 30) return colorToIcon('#ffd700');
-  return colorToIcon('#f87171');
+  return colorToIcon('#4169e1');
 };
 
 // 試合数（GAMES）に応じた色を返す（色文字 + 内側黒縁 + 外側白縁）
 const getGamesColorStyle = (games: number) => {
-  let color = '#f87171'; // red-400
-  if (games >= 5000) color = '#c084fc'; // purple-400
-  else if (games >= 3000) color = '#4169e1'; // blue-400
+  let color = '#4169e1'; // red-400
+  if (games >= 5000) color = '#f87171'; // purple-400
+  else if (games >= 3000) color = '#c084fc'; // blue-400
   else if (games >= 1000) color = '#006400'; // green-400
   else if (games >= 500) color = '#ffd700'; // yellow-400
 
@@ -98,20 +98,20 @@ const getGamesColorStyle = (games: number) => {
 
 // 試合数（GAMES）のアイコンを返す
 const getGamesIcon = (games: number): string => {
-  if (games >= 5000) return colorToIcon('#c084fc');
-  if (games >= 3000) return colorToIcon('#4169e1');
+  if (games >= 5000) return colorToIcon('#f87171');
+  if (games >= 3000) return colorToIcon('#c084fc');
   if (games >= 1000) return colorToIcon('#006400');
   if (games >= 500) return colorToIcon('#ffd700');
-  return colorToIcon('#f87171');
+  return colorToIcon('#4169e1');
 };
 
 // 色名からアイコン絵文字を返す
 function colorToIcon(color: string): string {
-  if (color === '#c084fc') return '✨✨✨✨✨'; // purple
-  if (color === '#4169e1') return '💧💧💧💧'; // blue
-  if (color === '#006400') return '🍃🍃🍃'; // green
-  if (color === '#ffd700') return '⚡⚡'; // yellow
-  return '🔥';                           // red (default)
+  if (color === '#f87171') return '🔥🔥🔥🔥'; // purple
+  if (color === '#c084fc') return '✨✨✨'; // blue
+  if (color === '#006400') return '🍃🍃'; // green
+  if (color === '#ffd700') return '⚡'; // yellow
+  return '💧';                           // red (default)
 }
 
 export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
