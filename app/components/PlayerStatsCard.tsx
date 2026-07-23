@@ -125,13 +125,13 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
   const rankScore = (rankName: string): number => {
     const upper = (rankName ?? '').toUpperCase().trim();
     let base = 0;
-    if (upper.startsWith('CHAMPION')) base = 70;
-    else if (upper.startsWith('DIAMOND')) base = 58;
-    else if (upper.startsWith('EMERALD')) base = 46;
-    else if (upper.startsWith('PLATINUM')) base = 34;
-    else if (upper.startsWith('GOLD')) base = 24;
-    else if (upper.startsWith('SILVER')) base = 14;
-    else if (upper.startsWith('BRONZE')) base = 6;
+    if (upper.startsWith('CHAMPION')) base = 80;
+    else if (upper.startsWith('DIAMOND')) base = 60;
+    else if (upper.startsWith('EMERALD')) base = 50;
+    else if (upper.startsWith('PLATINUM')) base = 40;
+    else if (upper.startsWith('GOLD')) base = 30;
+    else if (upper.startsWith('SILVER')) base = 15;
+    else if (upper.startsWith('BRONZE')) base = 5;
     else if (upper.startsWith('COPPER')) base = 2;
     const m = upper.match(/(\d)$/);
     const sub = m ? (parseInt(m[1], 10) === 1 ? 4 : parseInt(m[1], 10) === 2 ? 2 : 0) : 2;
@@ -425,6 +425,13 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
                   style={textStrokeWhiteStyle}
                 >
                   Lv.{lifetimeStats.level} · {lifetimeStats.timePlayed}
+                </p>
+                <p
+                  className="text-[9px] font-bold leading-tight mt-0"
+                  style={textStrokeWhiteStyle}
+                  title={`強さスコア: ${score} (${deco.tierLabel})`}
+                >
+                  {score} pt
                 </p>
               </div>
             </div>

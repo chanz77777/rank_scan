@@ -54,13 +54,13 @@ export interface CardDecoration {
  */
 function getRankBaseScore(rankName: string): number {
   const upper = (rankName ?? '').toUpperCase().trim();
-  if (upper.startsWith('CHAMPION')) return 70;
-  if (upper.startsWith('DIAMOND')) return 58;
-  if (upper.startsWith('EMERALD')) return 46;
-  if (upper.startsWith('PLATINUM')) return 34;
-  if (upper.startsWith('GOLD')) return 24;
-  if (upper.startsWith('SILVER')) return 14;
-  if (upper.startsWith('BRONZE')) return 6;
+  if (upper.startsWith('CHAMPION')) return 80;
+  if (upper.startsWith('DIAMOND')) return 60;
+  if (upper.startsWith('EMERALD')) return 50;
+  if (upper.startsWith('PLATINUM')) return 40;
+  if (upper.startsWith('GOLD')) return 30;
+  if (upper.startsWith('SILVER')) return 15;
+  if (upper.startsWith('BRONZE')) return 5;
   if (upper.startsWith('COPPER')) return 2;
   return 0;
 }
@@ -102,11 +102,11 @@ function parsePlaytimeHours(timePlayed: string): number {
  */
 function playtimeBonus(timePlayed: string): number {
   const hours = parsePlaytimeHours(timePlayed);
-  if (hours >= 5000) return 20;
-  if (hours >= 3000) return 10;
-  if (hours >= 2000) return 5;
-  if (hours >= 1000) return 2;
-  if (hours >= 500) return 1;
+  if (hours >= 5000) return 20;   //🔥
+  if (hours >= 3000) return 10;   //✨
+  if (hours >= 2000) return 5;    //🍃
+  if (hours >= 1000) return 2;    //⚡
+  if (hours >= 500) return 1;     //💧
   return 0;
 }
 
@@ -116,11 +116,11 @@ function playtimeBonus(timePlayed: string): number {
 
 /** K/D 比 → ボーナス点 */
 function kdBonus(kd: number): number {
-  if (kd >= 1.5) return 20;
-  if (kd >= 1.0) return 10;
-  if (kd >= 0.8) return 5;
-  if (kd >= 0.5) return 2;
-  if (kd >= 0.3) return 1;
+  if (kd >= 1.5) return 20;//🔥
+  if (kd >= 1.0) return 10;//✨
+  if (kd >= 0.8) return 5;//🍃
+  if (kd >= 0.5) return 2;//⚡
+  if (kd >= 0.3) return 1;//💧
   return 0;
 }
 
