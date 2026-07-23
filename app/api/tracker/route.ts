@@ -88,13 +88,13 @@ async function fetchWithCurl(ubiId: string): Promise<TrackerResponse | null> {
 
 function getRankBaseScore(rankName: string): number {
   const upper = (rankName ?? '').toUpperCase().trim();
-  if (upper.startsWith('CHAMPION')) return 70;
-  if (upper.startsWith('DIAMOND')) return 58;
-  if (upper.startsWith('EMERALD')) return 46;
-  if (upper.startsWith('PLATINUM')) return 34;
-  if (upper.startsWith('GOLD')) return 24;
-  if (upper.startsWith('SILVER')) return 14;
-  if (upper.startsWith('BRONZE')) return 6;
+  if (upper.startsWith('CHAMPION')) return 80;
+  if (upper.startsWith('DIAMOND')) return 60;
+  if (upper.startsWith('EMERALD')) return 50;
+  if (upper.startsWith('PLATINUM')) return 40;
+  if (upper.startsWith('GOLD')) return 30;
+  if (upper.startsWith('SILVER')) return 15;
+  if (upper.startsWith('BRONZE')) return 5;
   if (upper.startsWith('COPPER')) return 2;
   return 0;
 }
@@ -195,11 +195,11 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     const meta = stat.metadata as { name?: string; tierName?: string } | undefined;
     const rName = meta?.name || meta?.tierName || '';
     if (!rName) continue;
-    
+
     const base = getRankBaseScore(rName);
     const sub = getRankSubBonus(rName);
     const totalRankValue = base + sub; // 例: Emerald 1 は 46 + 4 = 50, Platinum 1 は 34 + 4 = 38
-    
+
     if (totalRankValue > (highestBaseScore + highestSubBonus)) {
       highestBaseScore = base;
       highestSubBonus = sub;
@@ -213,7 +213,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     const meta = stat.metadata as { name?: string; tierName?: string } | undefined;
     const rName = meta?.name || meta?.tierName || '';
     if (!rName) return false;
-    
+
     const base = getRankBaseScore(rName);
     const sub = getRankSubBonus(rName);
     return base === highestBaseScore && sub === highestSubBonus && highestBaseScore > 0;
@@ -225,7 +225,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     const val = stat?.value ?? 0;
     const meta = stat?.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
     const rName = meta?.name || meta?.tierName || '';
-    const rImg  = meta?.imageUrl || '';
+    const rImg = meta?.imageUrl || '';
     const sName = (s.metadata?.shortName as string) ?? `S${s.attributes?.season}`;
     return {
       season: sName,
@@ -248,7 +248,7 @@ function parseTrackerResponse(ubiId: string, json: TrackerResponse): PlayerStats
     const val = stat?.value ?? 0;
     const meta = stat?.metadata as { name?: string; tierName?: string; imageUrl?: string } | undefined;
     const rName = meta?.name || meta?.tierName || '';
-    const rImg  = meta?.imageUrl || '';
+    const rImg = meta?.imageUrl || '';
     const sName = (s.metadata?.shortName as string) ?? `S${s.attributes?.season}`;
     if (!rName || rName === 'NO RANK') return null;
     return {
@@ -303,7 +303,7 @@ function getOcrCandidates(id: string): string[] {
 
   // 基本的な相互置換テーブル
   // 1, l, I, | の相互置換グループ
-  const simL = ['1', 'l', 'I', '|'];
+  const simL = ['1', 'l', 'I'];
   // o, O, 0 の相互置換グループ
   const simO = ['o', 'O', '0'];
 
@@ -319,7 +319,7 @@ function getOcrCandidates(id: string): string[] {
   // 2. 文字列の各文字をスキャンして置換候補を作成する
   // 組み合わせ数が爆発するのを防ぐため、最大3箇所の変更に制限して実用的な候補を生成する。
   const chars = id.split('');
-  
+
   // 置換可能な文字のインデックスと、その代替文字候補のリストを抽出
   const targets: { index: number; options: string[] }[] = [];
   for (let i = 0; i < chars.length; i++) {
@@ -341,18 +341,18 @@ function getOcrCandidates(id: string): string[] {
   if (targets.length > 0) {
     // 置換対象が多すぎる場合は先頭側の3つに絞る
     const activeTargets = targets.slice(0, 3);
-    
+
     // バックトラック的に組み合わせを再帰生成
     function generate(targetIdx: number, currentChars: string[]) {
       if (targetIdx === activeTargets.length) {
         candidatesSet.add(currentChars.join(''));
         return;
       }
-      
+
       const { index, options } = activeTargets[targetIdx];
       // 変更しないパターン
       generate(targetIdx + 1, [...currentChars]);
-      
+
       // 変更するパターン
       for (const opt of options) {
         const nextChars = [...currentChars];
@@ -360,19 +360,19 @@ function getOcrCandidates(id: string): string[] {
         generate(targetIdx + 1, nextChars);
       }
     }
-    
+
     generate(0, chars);
   }
 
   // 元のIDは除外して返す
   candidatesSet.delete(id);
-  
+
   // 優先順位をつける（変更箇所が少ないものを手前に、実用性の高いものを優先）
   const result = Array.from(candidatesSet);
-  
+
   // デバッグ用にコンソール出力
   console.log(`Generated ${result.length} OCR correction candidates for: "${id}"`, result);
-  
+
   // APIへの過剰な負荷を避けるため、最大15件に制限して返す
   return result.slice(0, 15);
 }
