@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import PlayerStatsCard from '@/app/components/PlayerStatsCard';
 import { PlayerStats } from '@/app/lib/types';
 import { parsePlayerIdsFromText } from '@/app/lib/ocrProcessor';
+import PlatformToggle, { Platform } from '@/app/components/PlatformToggle';
 
 const DEFAULT_IMAGE_PATH = '';
 
@@ -16,8 +17,14 @@ declare global {
 }
 
 export default function Home() {
-  const [allies, setAllies] = useState<PlayerStats[]>([]);
-  const [enemies, setEnemies] = useState<PlayerStats[]>([]);
+  // プレイヤー枠（抽出したIDの並び順に対応。未取得/失敗の枠はnull）
+  const [playerSlots, setPlayerSlots] = useState<(PlayerStats | null)[]>([]);
+  // 手動修正用の編集可能なID一覧（抽出結果をコピーして保持）
+  const [editableIds, setEditableIds] = useState<string[]>([]);
+  // ID手動修正パネルの開閉
+  const [showIdEditor, setShowIdEditor] = useState(false);
+  // 個別再検索中のインデックス（ボタンのローディング表示用）
+  const [reSearchingIndex, setReSearchingIndex] = useState<number | null>(null);
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [imagePath, setImagePath] = useState(DEFAULT_IMAGE_PATH);
@@ -29,6 +36,7 @@ export default function Home() {
   const [tesseractReady, setTesseractReady] = useState(false);
   const [autoCrop, setAutoCrop] = useState(true);
   const [statusMsg, setStatusMsg] = useState<string>('');
+  const [platform, setPlatform] = useState<Platform>('ubi');
 
   const addDebugLog = (message: string, _type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
     setStatusMsg(message);
@@ -304,43 +312,37 @@ export default function Home() {
       // テキストからプレイヤーIDを抽出
       const playerIds = parsePlayerIdsFromText(extractedText);
       setExtractedPlayerIds(playerIds);
+      +      setEditableIds(playerIds); // 手動修正用にも同じIDをセット
       addDebugLog(`✓ プレイヤーID抽出成功 (${playerIds.length}人)`, 'success');
       playerIds.forEach((id, idx) => {
         addDebugLog(`  [${idx + 1}] ${id}`, 'info');
       });
 
       // 各プレイヤーの詳細情報を取得
-      // スコアボードは上5人が味方・下5人が敵の順番
-      const alliesData: PlayerStats[] = [];
-      const enemiesData: PlayerStats[] = [];
+      // スコアボードは上5人が味方・下5人が敵の順番（取得失敗した枠もnullで位置を保持）
+      const slotsData: (PlayerStats | null)[] = new Array(playerIds.length).fill(null);
 
       for (let i = 0; i < playerIds.length; i++) {
         const playerId = playerIds[i];
         addDebugLog(`データ取得中 (${i + 1}/${playerIds.length}): ${playerId}`, 'info');
 
         const playerResponse = await fetch(
-          `/api/tracker?ubiId=${encodeURIComponent(playerId)}`
+          `/api/tracker?ubiId=${encodeURIComponent(playerId)}&platform=${platform}`
         );
         if (playerResponse.ok) {
           const playerData = await playerResponse.json();
-          // 最初の5人を味方、残りを敵として分類
-          if (i < 5) {
-            alliesData.push(playerData);
-          } else {
-            enemiesData.push(playerData);
-          }
+          slotsData[i] = playerData;
           addDebugLog(`✓ ${playerId} のデータ取得完了`, 'success');
         } else {
           addDebugLog(`✗ ${playerId} のデータ取得失敗 (${playerResponse.status})`, 'warning');
         }
       }
 
-      setAllies(alliesData);
-      setEnemies(enemiesData);
-      const total = alliesData.length + enemiesData.length;
-      if (total > 0) {
+      setPlayerSlots(slotsData);
+      const successCount = slotsData.filter((p) => p !== null).length;
+      if (successCount > 0) {
         addDebugLog(
-          `✓ プレイヤー情報を取得完了 (味方${alliesData.length}人 / 敵${enemiesData.length}人)`,
+          `✓ プレイヤー情報を取得完了 (${successCount}/${playerIds.length}人)`,
           'success'
         );
       } else if (playerIds.length > 0) {
@@ -405,19 +407,84 @@ export default function Home() {
   };
 
   const handleRemovePlayer = (ubiId: string) => {
-    setAllies((prev) => prev.filter((p) => p.ubiId.toLowerCase() !== ubiId.toLowerCase()));
-    setEnemies((prev) => prev.filter((p) => p.ubiId.toLowerCase() !== ubiId.toLowerCase()));
+    setPlayerSlots((prev) =>
+      prev.map((p) => (p && p.ubiId.toLowerCase() === ubiId.toLowerCase() ? null : p))
+    );
+  };
+  // 手動修正欄の入力値を更新
+  const handleEditableIdChange = (index: number, value: string) => {
+    setEditableIds((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
   };
 
+  // 指定インデックスのIDのみ再検索し、該当枠を差し替える
+  const handleReSearchSingle = async (index: number) => {
+    const newId = editableIds[index]?.trim();
+    if (!newId) return;
+
+    setReSearchingIndex(index);
+    setStatusMsg(`🔍 ${newId} を再検索中...`);
+
+    try {
+      const playerResponse = await fetch(`/api/tracker?ubiId=${encodeURIComponent(newId)}&platform=${platform}`);
+      if (playerResponse.ok) {
+        const playerData: PlayerStats = await playerResponse.json();
+        setPlayerSlots((prev) => {
+          const next = [...prev];
+          next[index] = playerData;
+          return next;
+        });
+        setExtractedPlayerIds((prev) => {
+          const next = [...prev];
+          next[index] = newId;
+          return next;
+        });
+        setStatusMsg(`✓ ${newId} のデータを再取得しました`);
+      } else {
+        setStatusMsg(`✗ ${newId} のデータ取得失敗 (${playerResponse.status})`);
+      }
+    } catch (error) {
+      setStatusMsg(`✗ エラー: ${error}`);
+    } finally {
+      setReSearchingIndex(null);
+    }
+  };
+  // 表示用: スロット配列から味方/敵を切り出す（未取得はnullなので除外）
+  const allies = playerSlots.slice(0, 5).filter((p): p is PlayerStats => p !== null);
+  const enemies = playerSlots.slice(5, 10).filter((p): p is PlayerStats => p !== null);
+
+  // プラットフォームごとの画面全体背景（鮮やかな配色）
+  const BG_GRADIENTS: Record<Platform, string> = {
+    ubi: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)', // 今のまま（スレート系）
+    psn: 'linear-gradient(180deg, #0b3d91 0%, #0284c7 50%, #0b3d91 100%)', // 鮮やかな青
+    xbl: 'linear-gradient(180deg, #0f5132 0%, #16a34a 50%, #0f5132 100%)', // 鮮やかな緑
+  };
 
   return (
     <main
-      className="relative min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+      className="relative min-h-screen w-full overflow-x-hidden"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* 💡 背景クロスフェードレイヤー：3枚重ねて opacity で滑らかに切り替える */}
+      <div className="fixed inset-0 -z-10">
+        {(Object.keys(BG_GRADIENTS) as Platform[]).map((key) => (
+          <div
+            key={key}
+            className="absolute inset-0"
+            style={{
+              background: BG_GRADIENTS[key],
+              opacity: platform === key ? 1 : 0,
+              transition: 'opacity 0.6s ease',
+            }}
+          />
+        ))}
+      </div>
       {/* 全画面D&Dオーバーレイ */}
       {isDragActive && (
         <div className="fixed inset-0 z-50 bg-blue-900/60 backdrop-blur-sm flex items-center justify-center pointer-events-none">
@@ -498,11 +565,57 @@ export default function Home() {
                   />
                   自動切り抜き
                 </label>
+                <PlatformToggle value={platform} onChange={setPlatform} />
               </div>
             </div>
           </div>
         </div>
+        {/* ID手動修正トグル */}
+        {extractedPlayerIds.length > 0 && (
+          <div className="max-w-7xl mx-auto mb-6">
+            <button
+              type="button"
+              onClick={() => setShowIdEditor((prev) => !prev)}
+              className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <span>{showIdEditor ? '▼' : '▶'}</span>
+              プレイヤーIDを手動修正
+            </button>
 
+            {showIdEditor && (
+              <div className="mt-3 bg-slate-800/60 border border-slate-700 rounded-lg p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {editableIds.map((id, idx) => (
+                    <div key={idx} className="flex flex-col gap-1.5">
+                      <span className="text-xs text-slate-500">
+                        {idx < 5 ? `味方${idx + 1}` : `敵${idx - 4}`}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={id}
+                          onChange={(e) => handleEditableIdChange(idx, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleReSearchSingle(idx);
+                          }}
+                          className="flex-1 min-w-0 bg-slate-900/70 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono outline-none focus:border-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleReSearchSingle(idx)}
+                          disabled={reSearchingIndex === idx}
+                          className="shrink-0 px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded transition-colors"
+                        >
+                          {reSearchingIndex === idx ? '...' : '🔍'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* プレイヤーカード */}
         <div className="max-w-full px-8 mx-auto">
@@ -533,7 +646,7 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
                     {allies.map((player) => (
                       <div key={player.ubiId} className="relative group">
-                        <PlayerStatsCard stats={player} />
+                        <PlayerStatsCard stats={player} platform={platform} />
                       </div>
                     ))}
                   </div>
@@ -550,7 +663,7 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
                     {enemies.map((player) => (
                       <div key={player.ubiId} className="relative group">
-                        <PlayerStatsCard stats={player} />
+                        <PlayerStatsCard stats={player} platform={platform} />
                       </div>
                     ))}
                   </div>

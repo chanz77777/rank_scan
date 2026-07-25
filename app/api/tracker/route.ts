@@ -14,7 +14,18 @@ const execAsync = promisify(exec);
  * Windows 標準の curl.exe (BoringSSL ベース) を使って回避します。
  */
 
-const TRACKER_API = 'https://api.tracker.gg/api/v2/r6siege/standard/profile/ubi';
+const TRACKER_API_BASE = 'https://api.tracker.gg/api/v2/r6siege/standard/profile';
+
+// tracker.ggが受け付けるプラットフォームスラッグのみ許可（不正な値の混入防止）
+const VALID_PLATFORMS = ['ubi', 'psn', 'xbl'] as const;
+type TrackerPlatform = typeof VALID_PLATFORMS[number];
+
+function resolvePlatform(platform: string | null): TrackerPlatform {
+  if (platform && (VALID_PLATFORMS as readonly string[]).includes(platform)) {
+    return platform as TrackerPlatform;
+  }
+  return 'ubi'; // 未指定・不正値は従来通り ubi にフォールバック
+}
 
 interface TrackerStat {
   value: number;
@@ -43,8 +54,8 @@ interface TrackerResponse {
   };
 }
 
-async function fetchWithCurl(ubiId: string): Promise<TrackerResponse | null> {
-  const url = `${TRACKER_API}/${encodeURIComponent(ubiId)}`;
+async function fetchWithCurl(ubiId: string, platform: TrackerPlatform): Promise<TrackerResponse | null> {
+  const url = `${TRACKER_API_BASE}/${platform}/${encodeURIComponent(ubiId)}`;
 
   const curlCmd = [
     'curl',
@@ -380,6 +391,7 @@ function getOcrCandidates(id: string): string[] {
 export async function GET(request: NextRequest) {
   try {
     const ubiId = request.nextUrl.searchParams.get('ubiId');
+    const platform = resolvePlatform(request.nextUrl.searchParams.get('platform'));
 
     if (!ubiId) {
       return NextResponse.json(
@@ -389,7 +401,7 @@ export async function GET(request: NextRequest) {
     }
 
     // まず元のIDで検索
-    let json = await fetchWithCurl(ubiId);
+    let json = await fetchWithCurl(ubiId, platform);
     let resolvedId = ubiId;
 
     // 404の場合はOCR補正候補でリトライ
@@ -397,7 +409,7 @@ export async function GET(request: NextRequest) {
       const candidates = getOcrCandidates(ubiId);
       for (const candidate of candidates) {
         console.log(`Retrying with OCR candidate: "${candidate}" (original: "${ubiId}")`);
-        const retryJson = await fetchWithCurl(candidate);
+        const retryJson = await fetchWithCurl(candidate, platform);
         if (retryJson && retryJson.data) {
           json = retryJson;
           resolvedId = candidate;

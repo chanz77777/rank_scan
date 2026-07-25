@@ -8,9 +8,11 @@ import {
   getCardDecoration,
   type StrengthTier,
 } from '@/app/lib/playerStrength';
+import type { Platform } from '@/app/components/PlatformToggle';
 
 interface PlayerStatsCardProps {
   stats: PlayerStats;
+  platform?: Platform; // 💡 未指定時は 'ubi' にフォールバック
 }
 
 // ────────────────────────────────────────────────────────────────────────
@@ -114,9 +116,9 @@ function colorToIcon(color: string): string {
   return '💧';                           // red (default)
 }
 
-export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
+export default function PlayerStatsCard({ stats, platform = 'ubi' }: PlayerStatsCardProps) {
   const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank, avatarUrl, allSeasonRanks } = stats;
-  const trackerUrl = `https://r6.tracker.network/r6siege/profile/ubi/${encodeURIComponent(ubiId)}/overview`;
+  const trackerUrl = `https://r6.tracker.network/r6siege/profile/${platform}/${encodeURIComponent(ubiId)}/overview`;
 
   // 現在ランク: 明示フィールド → allSeasonRanks[0] の順にフォールバック
   const currentRankInfo = currentRank ?? allSeasonRanks[0]?.rank;
@@ -320,7 +322,7 @@ export default function PlayerStatsCard({ stats }: PlayerStatsCardProps) {
           'w-full',
           'rounded-[9px] border border-slate-700/60',
           'shadow-2xl overflow-hidden',
-          'flex flex-col aspect-[63/88] relative max-w-[250px] mx-auto',
+          'flex flex-col aspect-[63/88] relative max-w-[230px] mx-auto',
           // 💡 ティアに応じた専用のクラスを付与し、それ以外は標準のホバースケールを適用
           tier === 'champion'
             ? 'card-3d-champion'
