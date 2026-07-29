@@ -23,6 +23,22 @@ export default function BentoCardWrapper({
 
   return (
     <div className={wrapperClasses}>
+      {/* MVP バッジ */}
+      {isHero && (
+        <div className="bento-badge bento-badge-mvp flex items-center gap-1">
+          <span>👑</span>
+          <span>MVP</span>
+        </div>
+      )}
+
+      {/* THREAT バッジ */}
+      {isThreat && (
+        <div className="bento-badge bento-badge-threat flex items-center gap-1">
+          <span>⚠️</span>
+          <span>THREAT</span>
+        </div>
+      )}
+
       {children}
     </div>
   );
