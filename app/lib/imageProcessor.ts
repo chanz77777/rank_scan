@@ -4,100 +4,74 @@
  */
 
 /**
- * ゲームスクリーンショットからプレイヤーIDを抽出
- * 
- * 注意: 本実装ではClaudeのVision APIを使用してテキスト抽出します
- * 代替案：Tesseract.js (ブラウザ内OCR) または Node.js tesseract
+ * 画像からスコアボードのプレイヤー名列部分（中央の特定エリア）を切り抜く
+ * アイコン除去は行わず、切り抜き＋二値化のみ実施
  */
+export const cropImageToCenterGrid = (base64Str: string, mimeType: string = 'image/png'): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
 
-interface ExtractionResult {
-  playerIds: string[];
-  confidence: number;
-  rawText: string;
-}
+        const width = img.naturalWidth;
+        const height = img.naturalHeight;
 
-/**
- * Claude Vision API を使用してスクリーンショットをOCR処理
- * @param imageUrl - 画像ファイルのPath またはBase64
- * @returns プレイヤーID配列
- */
-export async function extractPlayerIdsFromImage(
-  imageUrl: string
-): Promise<ExtractionResult> {
-  try {
-    // Note: 実装時には以下のような方式を使用：
-    // 1. ローカルファイル → Base64に変換
-    // 2. Claude API に送信
-    // 3. テキスト抽出＆パーサー
-    
-    // モック実装（実際にはAPI呼び出しが必要）
-    console.log('Processing image:', imageUrl);
-    
-    // 実装例：
-    // const response = await fetch('https://api.anthropic.com/v1/messages', {
-    //   method: 'POST',
-    //   headers: {
-    //     'x-api-key': process.env.ANTHROPIC_API_KEY,
-    //     'content-type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     model: 'claude-3-5-sonnet-20241022',
-    //     max_tokens: 1024,
-    //     messages: [{
-    //       role: 'user',
-    //       content: [
-    //         {
-    //           type: 'image',
-    //           source: {
-    //             type: 'base64',
-    //             media_type: 'image/jpeg',
-    //             data: imageBase64,
-    //           },
-    //         },
-    //         {
-    //           type: 'text',
-    //           text: `このR6 SiegeのスクリーンショットからプレイヤーIDを全て抽出してください。
-    //                   JSON形式で返してください。
-    //                   例: {"playerIds": ["PlayerName1", "PlayerName2"], "confidence": 0.95}`
-    //         }
-    //       ],
-    //     }],
-    //   }),
-    // });
+        // スコアボードのプレイヤー名列の切り抜き範囲比率
+        // 横: 29.0% 〜 46.0% (幅 17.0%)
+        // 縦: 29% 〜 80% (高さ 51%)
+        const cropX = Math.round(width * 0.29);
+        const cropY = Math.round(height * 0.29);
+        const cropW = Math.round(width * 0.17);
+        const cropH = Math.round(height * 0.51);
 
-    return {
-      playerIds: [],
-      confidence: 0,
-      rawText: 'Image processing not yet implemented',
+        // Tesseractの認識精度向上のため、4倍に拡大する
+        const scale = 4;
+        canvas.width = cropW * scale;
+        canvas.height = cropH * scale;
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+        // 画像処理（二値化・白黒反転）
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // 輝度 (グレースケール)
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          // 二値化 & 白黒反転 (文字を黒[0]、背景を白[255]にする)
+          const binValue = gray > 100 ? 0 : 255;
+
+          data[i] = binValue;     // R
+          data[i + 1] = binValue; // G
+          data[i + 2] = binValue; // B
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        // PNG形式でBase64書き出し
+        const croppedBase64 = canvas.toDataURL('image/png').split(',')[1];
+        resolve(croppedBase64);
+      } catch (e) {
+        reject(e);
+      }
     };
-  } catch (error) {
-    console.error('Image processing error:', error);
-    throw new Error('Failed to process image');
-  }
-}
-
-/**
- * テキストからプレイヤーIDを抽出するシンプルなパーサー
- * (Leaderboard形式のテキストを想定)
- */
-export function parsePlayerIdsFromText(text: string): string[] {
-  // R6 Siege のスコアボード形式を想定
-  // 例: "1. PlayerName1 - 850 Points"
-  // または単なるプレイヤー名リスト
-  
-  const lines = text.split('\n');
-  const playerIds: string[] = [];
-
-  lines.forEach((line) => {
-    // 数字とドット、プレイヤー名のパターンを抽出
-    const match = line.match(/(?:\d+\.\s+)?([A-Za-z0-9_-]+)/);
-    if (match && match[1]) {
-      playerIds.push(match[1]);
-    }
+    img.onerror = () => reject(new Error('Failed to load image for cropping'));
+    img.src = `data:${mimeType};base64,${base64Str}`;
   });
-
-  return [...new Set(playerIds)]; // 重複を削除
-}
+};
 
 /**
  * 画像ファイルをBase64に変換
