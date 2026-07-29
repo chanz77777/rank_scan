@@ -1,0 +1,10 @@
+/* ============================================================
+   カード3D傾き効果スタイル
+   ============================================================ */
+
+.card-3d-champion,
+.card-3d-diamond {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.15s ease-out;
+  transform-style: preserve-3d;
+}
