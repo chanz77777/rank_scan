@@ -199,23 +199,31 @@ export function useImageScanner(
       setEditableIds(playerIds);
       addDebugLog(`✓ プレイヤーID抽出成功 (${playerIds.length}人)`, 'success');
 
-      const slotsData: (PlayerStats | null)[] = new Array(playerIds.length).fill(null);
+      // 全プレイヤーのデータを並列取得（直列 for-await から Promise.allSettled に変更）
+      // 1人ずつ順番に待つ逐次処理をやめ、全員分のリクエストを同時に発行する。
+      // Promise.allSettled は1件が失敗しても残りの処理を止めないため、部分的な取得失敗に安全に対応できる。
+      addDebugLog(`🔄 ${playerIds.length}人分のデータを並列取得中...`, 'info');
 
-      for (let i = 0; i < playerIds.length; i++) {
+      const results = await Promise.allSettled(
+        playerIds.map((playerId) =>
+          fetch(`/api/tracker?ubiId=${encodeURIComponent(playerId)}&platform=${platform}`)
+            .then(async (res) => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              return (await res.json()) as PlayerStats;
+            })
+        )
+      );
+
+      const slotsData: (PlayerStats | null)[] = results.map((result, i) => {
         const playerId = playerIds[i];
-        addDebugLog(`データ取得中 (${i + 1}/${playerIds.length}): ${playerId}`, 'info');
-
-        const playerResponse = await fetch(
-          `/api/tracker?ubiId=${encodeURIComponent(playerId)}&platform=${platform}`
-        );
-        if (playerResponse.ok) {
-          const playerData = await playerResponse.json();
-          slotsData[i] = playerData;
+        if (result.status === 'fulfilled') {
           addDebugLog(`✓ ${playerId} のデータ取得完了`, 'success');
+          return result.value;
         } else {
-          addDebugLog(`✗ ${playerId} のデータ取得失敗 (${playerResponse.status})`, 'warning');
+          addDebugLog(`✗ ${playerId} のデータ取得失敗 (${result.reason})`, 'warning');
+          return null;
         }
-      }
+      });
 
       setPlayerSlots(slotsData);
       const successCount = slotsData.filter((p) => p !== null).length;

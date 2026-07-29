@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PlayerStats } from '@/app/lib/types';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
+/**
+ * OS に応じた curl コマンド名を返す。
+ * Windows では 'curl.exe'、それ以外 (Linux / macOS) では 'curl' を使用する。
+ * これにより Vercel (Linux) やローカル Windows 環境の両方で動作する。
+ */
+const CURL_CMD = process.platform === 'win32' ? 'curl.exe' : 'curl';
 
 /**
  * R6 Tracker プレイヤー戦績取得API
@@ -57,27 +64,36 @@ interface TrackerResponse {
 async function fetchWithCurl(ubiId: string, platform: TrackerPlatform): Promise<TrackerResponse | null> {
   const url = `${TRACKER_API_BASE}/${platform}/${encodeURIComponent(ubiId)}`;
 
-  const curlCmd = [
-    'curl',
+  // ─── OS依存改善ポイント ───────────────────────────────────────────────────
+  // 以前: exec(string) でコマンド文字列を結合していた。
+  //   → URLやヘッダー値のスペース・引用符が原因でシェルインジェクションリスクあり。
+  //   → windowsHide: true はWindows専用オプションで非Windowsでは無意味な設定だった。
+  //
+  // 現在: execFile(cmd, args[]) で引数を配列として渡す。
+  //   → シェルを経由しないため、インジェクションのリスクがゼロ。
+  //   → CURL_CMD で Windows/Linux/macOS を自動判定。
+  // ─────────────────────────────────────────────────────────────────────────
+  const curlArgs = [
     '-s',                                         // サイレントモード
-    '--max-time', '15',                            // タイムアウト15秒
-    '--compressed',                                // gzip対応
-    '-H', '"Accept: application/json, text/plain, */*"',
-    '-H', '"Accept-Language: ja,en-US;q=0.9,en;q=0.8"',
-    '-H', '"Origin: https://r6.tracker.network"',
-    '-H', '"Referer: https://r6.tracker.network/"',
-    '-H', '"User-Agent: Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Mobile Safari/537.36"',
-    '-H', '"sec-fetch-dest: empty"',
-    '-H', '"sec-fetch-mode: cors"',
-    '-H', '"sec-fetch-site: cross-site"',
-    '-H', '"sec-fetch-storage-access: active"',
-    `"${url}"`,
-  ].join(' ');
+    '--max-time', '15',                           // タイムアウト15秒
+    '--compressed',                               // gzip対応
+    '-H', 'Accept: application/json, text/plain, */*',
+    '-H', 'Accept-Language: ja,en-US;q=0.9,en;q=0.8',
+    '-H', 'Origin: https://r6.tracker.network',
+    '-H', 'Referer: https://r6.tracker.network/',
+    '-H', 'User-Agent: Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Mobile Safari/537.36',
+    '-H', 'sec-fetch-dest: empty',
+    '-H', 'sec-fetch-mode: cors',
+    '-H', 'sec-fetch-site: cross-site',
+    '-H', 'sec-fetch-storage-access: active',
+    url,                                          // URLも配列要素として渡す（引用符不要）
+  ];
 
   try {
-    const { stdout, stderr } = await execAsync(curlCmd, {
+    const { stdout, stderr } = await execFileAsync(CURL_CMD, curlArgs, {
       timeout: 20000,
-      windowsHide: true,
+      // windowsHide は execFile でも機能するが、クロスプラットフォームのため条件分岐する
+      ...(process.platform === 'win32' ? { windowsHide: true } : {}),
     });
 
     if (!stdout || stdout.trim().length === 0) {
