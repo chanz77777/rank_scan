@@ -23,9 +23,10 @@ import SeasonPeakBadge from '@/app/components/player/SeasonPeakBadge';
 interface PlayerStatsCardProps {
   stats: PlayerStats;
   platform?: Platform;
+  hero?: boolean;
 }
 
-export default function PlayerStatsCard({ stats, platform = 'ubi' }: PlayerStatsCardProps) {
+export default function PlayerStatsCard({ stats, platform = 'ubi', hero = false }: PlayerStatsCardProps) {
   const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank, avatarUrl, allSeasonRanks } = stats;
 
   const currentRankInfo = currentRank ?? allSeasonRanks[0]?.rank;
@@ -137,7 +138,7 @@ export default function PlayerStatsCard({ stats, platform = 'ubi' }: PlayerStats
 
   return (
     <div
-      className={`${deco.wrapperClassName} group`}
+      className={`${deco.wrapperClassName} group w-full ${hero ? 'h-full flex flex-col justify-stretch' : ''}`}
       style={{
         ...deco.wrapperStyle,
         perspective: isHoloCard ? '600px' : 'none',
@@ -151,7 +152,9 @@ export default function PlayerStatsCard({ stats, platform = 'ubi' }: PlayerStats
           'w-full',
           'rounded-[9px] border border-slate-700/60',
           'shadow-2xl overflow-hidden',
-          'flex flex-col aspect-[63/88] relative max-w-[230px] mx-auto',
+          hero
+            ? 'card-hero-body flex flex-col relative h-full justify-between'
+            : 'flex flex-col aspect-[63/88] relative max-w-[200px] mx-auto',
           tier === 'champion'
             ? 'card-3d-champion'
             : tier === 'diamond'

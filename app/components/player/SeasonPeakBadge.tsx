@@ -13,8 +13,8 @@ export default function SeasonPeakBadge({ bestPeak, allSeasonRanks }: SeasonPeak
   if (!bestPeak) return null;
 
   return (
-    <div className="border-t border-slate-700/60 pt-1">
-      <div className="flex items-center gap-1">
+    <div className="border-t border-slate-700/60 pt-1 min-w-0 overflow-hidden">
+      <div className="flex items-center gap-1 min-w-0">
         {/* 左: BEST ラベル + ランクアイコン + ランク名 */}
         <span
           className="text-[7px] font-bold uppercase tracking-wider flex-shrink-0"
@@ -26,12 +26,12 @@ export default function SeasonPeakBadge({ bestPeak, allSeasonRanks }: SeasonPeak
           <img
             src={bestPeak.rank.imageUrl}
             alt={bestPeak.rank.rank}
-            className="w-6 h-6 object-contain flex-shrink-0"
+            className="w-5 h-5 object-contain flex-shrink-0"
             title={bestPeak.rank.rank}
           />
         )}
         <span
-          className="text-[9px] font-extrabold truncate leading-none flex-shrink min-w-0"
+          className="text-[8.5px] font-extrabold truncate leading-none flex-shrink min-w-0"
           title={bestPeak.rank.rank}
           style={textStrokeWhiteStyle}
         >
@@ -39,13 +39,13 @@ export default function SeasonPeakBadge({ bestPeak, allSeasonRanks }: SeasonPeak
         </span>
 
         {/* スペーサー */}
-        <div className="flex-1" />
+        <div className="flex-1 min-w-[2px]" />
 
-        {/* 右: ALL ラベル + 全シーズンのアイコン横並び */}
+        {/* 右: ALL ラベル + 全シーズンのアイコン横並び (スクロール対応で溢れ防止) */}
         {allSeasonRanks.length > 1 ? (
-          <div className="flex items-center gap-0.5 flex-shrink-0">
+          <div className="flex items-center gap-0.5 min-w-0 overflow-x-auto scrollbar-none flex-shrink">
             <span
-              className="text-[7px] font-bold uppercase tracking-wider"
+              className="text-[7px] font-bold uppercase tracking-wider flex-shrink-0"
               style={textStrokeWhiteStyle}
             >
               ALL
@@ -60,11 +60,11 @@ export default function SeasonPeakBadge({ bestPeak, allSeasonRanks }: SeasonPeak
                   <img
                     src={peak.rank.imageUrl}
                     alt={peak.rank.rank}
-                    className="w-5 h-5 object-contain"
+                    className="w-4 h-4 object-contain"
                   />
                 ) : (
-                  <div className="w-5 h-5 rounded-full bg-slate-700/60 flex items-center justify-center">
-                    <span className="text-[8px] text-slate-300 font-bold leading-none">
+                  <div className="w-4 h-4 rounded-full bg-slate-700/60 flex items-center justify-center">
+                    <span className="text-[7px] text-slate-300 font-bold leading-none">
                       {peak.rank.rank.slice(0, 1)}
                     </span>
                   </div>
@@ -77,7 +77,7 @@ export default function SeasonPeakBadge({ bestPeak, allSeasonRanks }: SeasonPeak
           </div>
         ) : (
           <span
-            className="text-[9px] font-mono italic font-bold flex-shrink-0"
+            className="text-[8px] font-mono italic font-bold flex-shrink-0"
             title={`Peak Season: ${bestPeak.season}`}
             style={textStrokeWhiteStyle}
           >

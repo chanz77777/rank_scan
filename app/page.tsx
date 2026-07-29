@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import PlayerStatsCard from '@/app/components/PlayerStatsCard';
+import BentoCardWrapper from '@/app/components/player/BentoCardWrapper';
 import type { Platform } from '@/app/components/PlatformToggle';
 import ImageUploader from '@/app/components/scanner/ImageUploader';
 import IdEditorPanel from '@/app/components/scanner/IdEditorPanel';
 import { usePlayerStats } from '@/app/hooks/usePlayerStats';
 import { useImageScanner } from '@/app/hooks/useImageScanner';
+import { calcStrengthScore } from '@/app/lib/playerStrength';
 
 const BG_GRADIENTS: Record<Platform, string> = {
   ubi: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
@@ -54,6 +56,10 @@ export default function Home() {
     handleReSearchSingle(index, platform, setStatusMsg, setExtractedPlayerIds);
   };
 
+  // スコア順にソート（最高スコアを先頭 = Bento Grid の MVP / THREAT 位置へ）
+  const sortedAllies = [...allies].sort((a, b) => calcStrengthScore(b) - calcStrengthScore(a));
+  const sortedEnemies = [...enemies].sort((a, b) => calcStrengthScore(b) - calcStrengthScore(a));
+
   return (
     <main
       className="relative min-h-screen w-full overflow-x-hidden"
@@ -88,13 +94,13 @@ export default function Home() {
         </div>
       )}
 
-      <div className="py-8 px-4">
+      <div className="py-3 px-4 max-w-7xl mx-auto">
         {/* ヘッダー */}
-        <div className="max-w-7xl mx-auto mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">R6 Siege Stats Dashboard</h1>
-              <p className="text-slate-400 text-sm mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg">R6 Siege Stats Dashboard</h1>
+              <p className="text-slate-400 text-xs mt-0.5">
                 {isLoading ? (
                   <span className="text-blue-400 animate-pulse">{statusMsg || '処理中...'}</span>
                 ) : statusMsg ? (
@@ -131,55 +137,73 @@ export default function Home() {
           reSearchingIndex={reSearchingIndex}
         />
 
-        {/* プレイヤーカードグリッド */}
-        <div className="max-w-full px-8 mx-auto">
-          {allies.length + enemies.length === 0 ? (
-            <div className="text-center py-24">
+        {/* プレイヤーカード Bento Grid */}
+        <div className="max-w-full">
+          {sortedAllies.length + sortedEnemies.length === 0 ? (
+            <div className="text-center py-16">
               {isLoading ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500" />
-                  <p className="text-slate-400 text-sm">{statusMsg}</p>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+                  <p className="text-slate-400 text-xs">{statusMsg}</p>
                 </div>
               ) : (
                 <div className="text-slate-600">
-                  <p className="text-6xl mb-4">🖼️</p>
-                  <p className="text-xl">スクリーンショットをドラッグ＆ドロップ</p>
-                  <p className="text-sm mt-2">JPEG / PNG のみ対応</p>
+                  <p className="text-5xl mb-3">🖼️</p>
+                  <p className="text-lg">スクリーンショットをドラッグ＆ドロップ</p>
+                  <p className="text-xs mt-1">JPEG / PNG のみ対応</p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="space-y-8">
-              {/* 味方チーム */}
-              {allies.length > 0 && (
+            <div className="bento-dashboard-container">
+              {/* 味方チーム Bento Grid */}
+              {sortedAllies.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-blue-400 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
-                    味方チーム ({allies.length}人)
+                  <h2 className="text-xs font-bold text-blue-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400 shadow-md shadow-blue-500/50" />
+                    味方チーム ({sortedAllies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
-                    {allies.map((player) => (
-                      <div key={player.ubiId} className="relative group">
-                        <PlayerStatsCard stats={player} platform={platform} />
-                      </div>
-                    ))}
+                  <div className={`team-bento-box ${sortedAllies.length < 3 ? 'bento-single' : ''}`}>
+                    {/* MVP Hero Card (左) */}
+                    {sortedAllies[0] && (
+                      <BentoCardWrapper isHero>
+                        <PlayerStatsCard stats={sortedAllies[0]} platform={platform} hero />
+                      </BentoCardWrapper>
+                    )}
+                    {/* 残り4人 2x2 サブグリッド (右) */}
+                    <div className="team-bento-subgrid">
+                      {sortedAllies.slice(1).map((player) => (
+                        <BentoCardWrapper key={player.ubiId}>
+                          <PlayerStatsCard stats={player} platform={platform} />
+                        </BentoCardWrapper>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* 敵チーム */}
-              {enemies.length > 0 && (
+              {/* 敵チーム Bento Grid */}
+              {sortedEnemies.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-bold text-red-400 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                    <span className="inline-block w-2 h-2 rounded-full bg-red-400" />
-                    敵チーム ({enemies.length}人)
+                  <h2 className="text-xs font-bold text-red-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+                    <span className="inline-block w-2 h-2 rounded-full bg-red-400 shadow-md shadow-red-500/50" />
+                    敵チーム ({sortedEnemies.length}人)
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
-                    {enemies.map((player) => (
-                      <div key={player.ubiId} className="relative group">
-                        <PlayerStatsCard stats={player} platform={platform} />
-                      </div>
-                    ))}
+                  <div className={`team-bento-box ${sortedEnemies.length < 3 ? 'bento-single' : ''}`}>
+                    {/* THREAT Hero Card (左) */}
+                    {sortedEnemies[0] && (
+                      <BentoCardWrapper isThreat>
+                        <PlayerStatsCard stats={sortedEnemies[0]} platform={platform} hero />
+                      </BentoCardWrapper>
+                    )}
+                    {/* 残り4人 2x2 サブグリッド (右) */}
+                    <div className="team-bento-subgrid">
+                      {sortedEnemies.slice(1).map((player) => (
+                        <BentoCardWrapper key={player.ubiId}>
+                          <PlayerStatsCard stats={player} platform={platform} />
+                        </BentoCardWrapper>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
