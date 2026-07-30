@@ -138,13 +138,8 @@ export default function PlayerStatsCard({ stats, platform = 'ubi', hero = false 
 
   return (
     <div
-      className={`${deco.wrapperClassName} group w-full ${hero ? 'h-full flex flex-col justify-stretch' : ''}`}
-      style={{
-        ...deco.wrapperStyle,
-        perspective: isHoloCard ? '600px' : 'none',
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      className={`${deco.wrapperClassName} group w-full ${hero ? 'h-full flex flex-col justify-stretch' : ''} rounded-[9px] overflow-hidden`}
+      style={{ ...deco.wrapperStyle, perspective: isHoloCard ? '600px' : 'none' }}
     >
       <div
         ref={cardRef}
@@ -154,7 +149,7 @@ export default function PlayerStatsCard({ stats, platform = 'ubi', hero = false 
           'shadow-2xl overflow-hidden',
           hero
             ? 'card-hero-body flex flex-col relative h-full justify-between'
-            : 'flex flex-col aspect-[63/88] relative max-w-[200px] mx-auto',
+            : 'flex flex-col aspect-[63/88] relative w-full max-w-[420px] mx-auto',
           tier === 'champion'
             ? 'card-3d-champion'
             : tier === 'diamond'
