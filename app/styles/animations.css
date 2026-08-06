@@ -17,17 +17,96 @@
   }
 }
 
+/* ─── Raycast スタイル Border Beam (枠線上を走る光のライン) ─── */
+@keyframes raycast-border-beam {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
 .animate-rainbow-border,
 .card-champion-border {
-  background: linear-gradient(115deg, #ff7773, #ffed5f, #a8ff5f, #83fff7, #7894ff, #d875ff, #ff7773) !important;
-  background-size: 300% 300% !important;
-  animation: rainbow-border-flow 5s ease infinite !important;
+  position: relative;
+  overflow: hidden;
+  border-radius: 11px;
+  padding: 1.5px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
+
+/* ── 味方チーム（青・シアン・インディゴの高級 Border Beam） ── */
+.card-ally.animate-rainbow-border,
+.card-ally.card-champion-border {
+  background: rgba(99, 102, 241, 0.15) !important;
+}
+
+.card-ally.animate-rainbow-border::before,
+.card-ally.card-champion-border::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250%;
+  height: 250%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 280deg,
+    rgba(56, 189, 248, 0.2) 310deg,
+    rgba(99, 102, 241, 0.85) 345deg,
+    rgba(255, 255, 255, 1.0) 358deg,
+    transparent 360deg
+  );
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: raycast-border-beam 7s linear infinite !important;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 敵チーム（赤・ルビー・クリムゾンの高級 Border Beam） ── */
+.card-enemy.animate-rainbow-border,
+.card-enemy.card-champion-border {
+  background: rgba(239, 68, 68, 0.15) !important;
+}
+
+.card-enemy.animate-rainbow-border::before,
+.card-enemy.card-champion-border::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250%;
+  height: 250%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 280deg,
+    rgba(251, 146, 60, 0.2) 310deg,
+    rgba(244, 63, 94, 0.85) 345deg,
+    rgba(255, 255, 255, 1.0) 358deg,
+    transparent 360deg
+  );
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: raycast-border-beam 7s linear infinite !important;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.animate-rainbow-border.animate-float,
+.card-champion-border.animate-float {
+  animation: float-card 4s ease-in-out infinite !important;
+}
+
+
+
 
 .animate-rainbow-border.animate-float,
 .card-champion-border.animate-float {
   animation: float-card 4s ease-in-out infinite, rainbow-border-flow 5s ease infinite !important;
 }
+
 
 
 

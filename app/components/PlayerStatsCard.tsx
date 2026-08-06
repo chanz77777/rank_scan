@@ -24,9 +24,10 @@ interface PlayerStatsCardProps {
   stats: PlayerStats;
   platform?: Platform;
   hero?: boolean;
+  isEnemy?: boolean;
 }
 
-export default function PlayerStatsCard({ stats, platform = 'ubi', hero = false }: PlayerStatsCardProps) {
+export default function PlayerStatsCard({ stats, platform = 'ubi', hero = false, isEnemy = false }: PlayerStatsCardProps) {
   const { ubiId, username, currentSeason, lifetimeStats, heroImageUrl, seasonPeaks, currentRank, avatarUrl, allSeasonRanks } = stats;
 
   const currentRankInfo = currentRank ?? allSeasonRanks[0]?.rank;
@@ -58,7 +59,8 @@ export default function PlayerStatsCard({ stats, platform = 'ubi', hero = false 
 
   const score = calcStrengthScore(stats);
   const tier = getStrengthTier(score);
-  const deco = getCardDecoration(tier);
+  const deco = getCardDecoration(tier, isEnemy);
+
 
   const cardRef = useRef<HTMLDivElement>(null);
   const isHoloCard = tier === 'diamond' || tier === 'champion';

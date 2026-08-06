@@ -195,22 +195,30 @@ export function getStrengthTier(score: number): StrengthTier {
  *     グラデーションボーダーを表現する
  *   - champion のみ globals.css の .card-champion-border クラスでレインボーアニメ
  */
-export function getCardDecoration(tier: StrengthTier): CardDecoration {
+export function getCardDecoration(tier: StrengthTier, isEnemy: boolean = false): CardDecoration {
+  const teamClass = isEnemy ? 'card-enemy' : 'card-ally';
   switch (tier) {
     case 'champion':
       return {
         tier,
-        wrapperClassName: 'animate-float animate-rainbow-border p-[2px] rounded-[11px]',
+        wrapperClassName: `animate-float animate-rainbow-border p-[1.5px] rounded-[11px] relative overflow-hidden ${teamClass}`,
         wrapperStyle: {},
-        cardClassName: 'animate-bg-flow',
+        cardClassName: 'animate-bg-flow relative z-10',
+
         cardStyle: {
-          background: 'linear-gradient(135deg, #3b0066 0%, #1a0044 50%, #4a004f 100%)',
-          boxShadow: '0 0 35px 10px rgba(236,72,153,0.45), 0 0 70px 20px rgba(99,102,241,0.3)',
+          background: isEnemy
+            ? 'linear-gradient(135deg, #450a0a 0%, #1f0404 50%, #450a0a 100%)'
+            : 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #1e1b4b 100%)',
+          boxShadow: isEnemy
+            ? '0 0 35px 10px rgba(239,68,68,0.35), 0 0 70px 20px rgba(244,63,94,0.25)'
+            : '0 0 35px 10px rgba(99,102,241,0.4), 0 0 70px 20px rgba(56,189,248,0.25)',
           color: '#ffffff',
         },
         tierLabel: 'チャンピオン',
         tierEmoji: '👑',
       };
+
+
 
 
     case 'diamond':

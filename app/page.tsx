@@ -219,17 +219,18 @@ export default function Home() {
                     {/* THREAT Hero Card */}
                     {sortedEnemies[0] && (
                       <BentoCardWrapper isThreat>
-                        <PlayerStatsCard stats={sortedEnemies[0]} platform={platform} hero />
+                        <PlayerStatsCard stats={sortedEnemies[0]} platform={platform} hero isEnemy />
                       </BentoCardWrapper>
                     )}
                     {/* 残り 2x2 サブグリッド */}
                     <div className="team-bento-subgrid">
                       {sortedEnemies.slice(1).map((player) => (
                         <BentoCardWrapper key={player.ubiId}>
-                          <PlayerStatsCard stats={player} platform={platform} />
+                          <PlayerStatsCard stats={player} platform={platform} isEnemy />
                         </BentoCardWrapper>
                       ))}
                     </div>
+
                   </div>
                 </div>
               )}

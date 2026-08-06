@@ -8,8 +8,8 @@ interface ImageUploaderProps {
   setGeminiApiKey: (val: string) => void;
   showApiKey: boolean;
   setShowApiKey: (val: boolean) => void;
-  autoCrop: boolean;
-  setAutoCrop: (val: boolean) => void;
+  autoCrop?: boolean;
+  setAutoCrop?: (val: boolean) => void;
   platform: Platform;
   setPlatform: (p: Platform) => void;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -20,8 +20,6 @@ export default function ImageUploader({
   setGeminiApiKey,
   showApiKey,
   setShowApiKey,
-  autoCrop,
-  setAutoCrop,
   platform,
   setPlatform,
   handleFileSelect,
@@ -54,7 +52,7 @@ export default function ImageUploader({
         </button>
       </div>
 
-      {/* ファイル選択ボタン + 切り抜きトグル */}
+      {/* ファイル選択ボタン */}
       <div className="flex flex-wrap items-center gap-2">
         <label className="relative cursor-pointer shrink-0">
           <input
@@ -74,18 +72,9 @@ export default function ImageUploader({
           </span>
         </label>
 
-        <label className="qlc-check-label">
-          <input
-            type="checkbox"
-            checked={autoCrop}
-            onChange={(e) => setAutoCrop(e.target.checked)}
-            id="auto-crop-toggle"
-          />
-          自動切り抜き
-        </label>
-
         <PlatformToggle value={platform} onChange={setPlatform} />
       </div>
     </div>
   );
 }
+
