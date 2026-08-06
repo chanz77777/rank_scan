@@ -10,12 +10,6 @@ import { usePlayerStats } from '@/app/hooks/usePlayerStats';
 import { useImageScanner } from '@/app/hooks/useImageScanner';
 import { calcStrengthScore } from '@/app/lib/playerStrength';
 
-const BG_GRADIENTS: Record<Platform, string> = {
-  ubi: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-  psn: 'linear-gradient(180deg, #0b3d91 0%, #0284c7 50%, #0b3d91 100%)',
-  xbl: 'linear-gradient(180deg, #0f5132 0%, #16a34a 50%, #0f5132 100%)',
-};
-
 export default function Home() {
   const [platform, setPlatform] = useState<Platform>('ubi');
 
@@ -60,6 +54,8 @@ export default function Home() {
   const sortedAllies = [...allies].sort((a, b) => calcStrengthScore(b) - calcStrengthScore(a));
   const sortedEnemies = [...enemies].sort((a, b) => calcStrengthScore(b) - calcStrengthScore(a));
 
+  const hasPlayers = sortedAllies.length + sortedEnemies.length > 0;
+
   return (
     <main
       className="relative min-h-screen w-full overflow-x-hidden"
@@ -68,45 +64,40 @@ export default function Home() {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* 背景クロスフェードレイヤー */}
-      <div className="fixed inset-0 -z-10">
-        {(Object.keys(BG_GRADIENTS) as Platform[]).map((key) => (
-          <div
-            key={key}
-            className="absolute inset-0"
-            style={{
-              background: BG_GRADIENTS[key],
-              opacity: platform === key ? 1 : 0,
-              transition: 'opacity 0.6s ease',
-            }}
-          />
-        ))}
+      {/* ── Quiet Luxury Console 固定背景 ── */}
+      <div className="qlc-bg" aria-hidden="true">
+        <div className="qlc-bg-glow-top" />
+        <div className="qlc-bg-glow-bottom" />
       </div>
 
-      {/* 全画面D&Dオーバーレイ */}
+      {/* ── D&D オーバーレイ ── */}
       {isDragActive && (
-        <div className="fixed inset-0 z-50 bg-blue-900/60 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-          <div className="text-center">
-            <p className="text-6xl mb-4">📥</p>
-            <p className="text-3xl font-bold text-blue-200">ここにドロップ</p>
-            <p className="text-slate-300 mt-2">JPEG / PNG</p>
+        <div className="qlc-dnd-overlay">
+          <div className="qlc-dnd-inner">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)', opacity: 0.9 }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <p className="qlc-dnd-title">ここにドロップ</p>
+            <p className="qlc-dnd-sub">JPEG / PNG</p>
           </div>
         </div>
       )}
 
-      <div className="py-3 px-4 max-w-7xl mx-auto">
-        {/* ヘッダー */}
-        <div className="mb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="py-4 px-4 max-w-7xl mx-auto">
+        {/* ── ヘッダー ── */}
+        <div className="mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg">R6 Siege Stats Dashboard</h1>
-              <p className="text-slate-400 text-xs mt-0.5">
+              <h1 className="qlc-header-title">R6 Siege Stats Dashboard</h1>
+              <p className="qlc-header-sub">
                 {isLoading ? (
-                  <span className="text-blue-400 animate-pulse">{statusMsg || '処理中...'}</span>
+                  <span className="qlc-header-sub--active">{statusMsg || '処理中...'}</span>
                 ) : statusMsg ? (
-                  <span className="text-slate-300">{statusMsg}</span>
+                  <span className="qlc-header-sub--message">{statusMsg}</span>
                 ) : (
-                  'スクリーンショット（JPEG/PNG）をここにドラッグ＆ドロップ'
+                  'スクリーンショット（JPEG/PNG）をドラッグ＆ドロップ'
                 )}
               </p>
             </div>
@@ -137,40 +128,74 @@ export default function Home() {
           reSearchingIndex={reSearchingIndex}
         />
 
-        {/* プレイヤーカード Bento Grid */}
+        {/* ── プレイヤーカード Bento Grid ── */}
         <div className="max-w-full">
-          {sortedAllies.length + sortedEnemies.length === 0 ? (
-            <div className="text-center py-16">
+          {!hasPlayers ? (
+            <div className="text-center">
               {isLoading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
-                  <p className="text-slate-400 text-xs">{statusMsg}</p>
+                /* スケルトンローディング */
+                <div className="bento-dashboard-container">
+                  {/* 味方スケルトン */}
+                  <div>
+                    <div className="qlc-section-label mb-2">
+                      <span className="qlc-section-label-dot" style={{ background: 'var(--accent)' }} />
+                      <span style={{ color: 'var(--accent)', opacity: 0.7 }}>味方チーム</span>
+                    </div>
+                    <div className="team-bento-box">
+                      <div className="bento-card-hero-wrapper">
+                        <div className="qlc-skeleton qlc-skeleton-hero" />
+                      </div>
+                      <div className="team-bento-subgrid">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="qlc-skeleton qlc-skeleton-card" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {/* 敵スケルトン */}
+                  <div>
+                    <div className="qlc-section-label mb-2">
+                      <span className="qlc-section-label-dot" style={{ background: 'var(--fn-red)' }} />
+                      <span style={{ color: 'var(--fn-red)', opacity: 0.7 }}>敵チーム</span>
+                    </div>
+                    <div className="team-bento-box">
+                      <div className="bento-card-hero-wrapper">
+                        <div className="qlc-skeleton qlc-skeleton-hero" />
+                      </div>
+                      <div className="team-bento-subgrid">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="qlc-skeleton qlc-skeleton-card" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="text-slate-600">
-                  <p className="text-5xl mb-3">🖼️</p>
-                  <p className="text-lg">スクリーンショットをドラッグ＆ドロップ</p>
-                  <p className="text-xs mt-1">JPEG / PNG のみ対応</p>
+                /* 空状態 */
+                <div className="qlc-empty-state">
+                  <p className="qlc-empty-title">スクリーンショットをドロップ</p>
+                  <p className="qlc-empty-sub">JPEG / PNG のみ対応</p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="bento-dashboard-container">
-              {/* 味方チーム Bento Grid */}
+            <div className="bento-dashboard-container qlc-fade-in">
+              {/* 味方チーム */}
               {sortedAllies.length > 0 && (
-                <div>
-                  <h2 className="text-xs font-bold text-blue-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
-                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400 shadow-md shadow-blue-500/50" />
-                    味方チーム ({sortedAllies.length}人)
-                  </h2>
+                <div className="qlc-team-section">
+                  <div className="qlc-section-label">
+                    <span className="qlc-section-label-dot" style={{ background: 'var(--accent)' }} />
+                    <span style={{ color: 'var(--accent)' }}>味方チーム</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>({sortedAllies.length})</span>
+                  </div>
                   <div className={`team-bento-box ${sortedAllies.length < 3 ? 'bento-single' : ''}`}>
-                    {/* MVP Hero Card (左) */}
+                    {/* MVP Hero Card */}
                     {sortedAllies[0] && (
                       <BentoCardWrapper isHero>
                         <PlayerStatsCard stats={sortedAllies[0]} platform={platform} hero />
                       </BentoCardWrapper>
                     )}
-                    {/* 残り4人 2x2 サブグリッド (右) */}
+                    {/* 残り 2x2 サブグリッド */}
                     <div className="team-bento-subgrid">
                       {sortedAllies.slice(1).map((player) => (
                         <BentoCardWrapper key={player.ubiId}>
@@ -182,21 +207,22 @@ export default function Home() {
                 </div>
               )}
 
-              {/* 敵チーム Bento Grid */}
+              {/* 敵チーム */}
               {sortedEnemies.length > 0 && (
-                <div>
-                  <h2 className="text-xs font-bold text-red-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
-                    <span className="inline-block w-2 h-2 rounded-full bg-red-400 shadow-md shadow-red-500/50" />
-                    敵チーム ({sortedEnemies.length}人)
-                  </h2>
+                <div className="qlc-team-section">
+                  <div className="qlc-section-label">
+                    <span className="qlc-section-label-dot" style={{ background: 'var(--fn-red)' }} />
+                    <span style={{ color: 'var(--fn-red)' }}>敵チーム</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>({sortedEnemies.length})</span>
+                  </div>
                   <div className={`team-bento-box ${sortedEnemies.length < 3 ? 'bento-single' : ''}`}>
-                    {/* THREAT Hero Card (左) */}
+                    {/* THREAT Hero Card */}
                     {sortedEnemies[0] && (
                       <BentoCardWrapper isThreat>
                         <PlayerStatsCard stats={sortedEnemies[0]} platform={platform} hero />
                       </BentoCardWrapper>
                     )}
-                    {/* 残り4人 2x2 サブグリッド (右) */}
+                    {/* 残り 2x2 サブグリッド */}
                     <div className="team-bento-subgrid">
                       {sortedEnemies.slice(1).map((player) => (
                         <BentoCardWrapper key={player.ubiId}>
@@ -214,3 +240,4 @@ export default function Home() {
     </main>
   );
 }
+

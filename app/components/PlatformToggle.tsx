@@ -11,9 +11,9 @@ interface PlatformOption {
 }
 
 const PLATFORMS: PlatformOption[] = [
-  { value: 'ubi', label: 'PC', activeBg: 'linear-gradient(135deg, #475569, #1e293b)' },
-  { value: 'psn', label: 'PS', activeBg: 'linear-gradient(135deg, #2563eb, #0ea5e9)' },
-  { value: 'xbl', label: 'XBOX', activeBg: 'linear-gradient(135deg, #16a34a, #4ade80)' },
+  { value: 'ubi', label: 'PC',   activeBg: 'hsl(230, 60%, 30%)' },
+  { value: 'psn', label: 'PS',   activeBg: 'hsl(230, 70%, 38%)' },
+  { value: 'xbl', label: 'XBOX', activeBg: 'hsl(230, 55%, 28%)' },
 ];
 
 interface PlatformToggleProps {
@@ -59,7 +59,8 @@ export default function PlatformToggle({ value, onChange, className = '' }: Plat
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex items-center bg-slate-800/70 border border-slate-700/80 rounded-full p-1 select-none ${className}`}
+      className={`relative inline-flex items-center rounded-full p-1 select-none ${className}`}
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-low)' }}
       role="radiogroup"
       aria-label="プラットフォーム選択"
     >
@@ -70,7 +71,7 @@ export default function PlatformToggle({ value, onChange, className = '' }: Plat
           left: indicatorStyle.left,
           width: indicatorStyle.width,
           background: active.activeBg,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.4) inset',
+          boxShadow: '0 0 0 1px rgba(91,115,240,0.35)',
           transition: 'left 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
@@ -86,10 +87,11 @@ export default function PlatformToggle({ value, onChange, className = '' }: Plat
             aria-checked={isActive}
             onClick={() => onChange(p.value)}
             className={[
-              'relative z-10 flex-1 px-4 py-1.5 text-xs font-bold tracking-wide rounded-full',
+              'relative z-10 flex-1 px-4 py-1.5 text-xs font-semibold tracking-wide rounded-full',
               'transition-colors duration-300 ease-out',
-              isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200',
+              isActive ? 'text-white' : 'hover:text-white',
             ].join(' ')}
+            style={{ color: isActive ? '#fff' : 'var(--text-muted)' }}
           >
             {p.label}
           </button>

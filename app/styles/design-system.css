@@ -1,0 +1,487 @@
+/* ============================================================
+   Quiet Luxury Console — Design System
+   背景レイヤー・スケルトン・フェードインアニメーション
+   ============================================================ */
+
+/* ── 固定背景レイヤー ── */
+.qlc-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background: var(--bg-void);
+  overflow: hidden;
+}
+
+/* ノイズテクスチャ */
+.qlc-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--noise-texture);
+  background-size: 200px 200px;
+  opacity: 0.035;
+  pointer-events: none;
+}
+
+/* 上部グロー（アクセント低彩度） */
+.qlc-bg-glow-top {
+  position: absolute;
+  top: -20vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70vw;
+  height: 55vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    hsla(230, 60%, 38%, 0.13) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  filter: blur(48px);
+}
+
+/* 下部グロー（ニュートラル） */
+.qlc-bg-glow-bottom {
+  position: absolute;
+  bottom: -15vh;
+  left: 35%;
+  width: 55vw;
+  height: 45vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    hsla(220, 12%, 18%, 0.18) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  filter: blur(64px);
+}
+
+/* ── チームセクション ── */
+.qlc-team-section {
+  position: relative;
+}
+
+/* 細い1px境界線でチームを分離（ガラスパネル不使用） */
+.qlc-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.qlc-section-label-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── コントロールパネル ── */
+.qlc-control-panel {
+  background: var(--bg-section);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+/* ── Input / API Key ── */
+.qlc-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-low);
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.qlc-input-wrap:focus-within {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 1px var(--accent-ring);
+}
+
+.qlc-input-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-right: 8px;
+  user-select: none;
+}
+
+.qlc-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-geist-mono, monospace);
+  outline: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.qlc-input::placeholder {
+  color: var(--text-muted);
+}
+
+.qlc-eye-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  margin-left: 6px;
+  line-height: 1;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.qlc-eye-btn:hover {
+  color: var(--text-secondary);
+}
+
+/* ── ボタン（モノクローム） ── */
+.qlc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.qlc-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 1px var(--accent-ring), 0 0 12px 0 var(--accent-glow);
+  color: var(--text-primary);
+}
+
+.qlc-btn:active {
+  transform: scale(0.975);
+}
+
+/* ── チェックボックスラベル ── */
+.qlc-check-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.qlc-check-label:hover {
+  color: var(--text-secondary);
+}
+
+.qlc-check-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+/* ── IdEditor パネル ── */
+.qlc-id-editor-panel {
+  background: var(--bg-section);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.qlc-id-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+}
+
+.qlc-id-cell-ally {
+  border-color: rgba(91, 115, 240, 0.20);
+}
+
+.qlc-id-cell-enemy {
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.qlc-id-cell-label-ally {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: hsl(230, 70%, 72%);
+}
+
+.qlc-id-cell-label-enemy {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: hsl(0, 70%, 70%);
+}
+
+.qlc-id-input {
+  flex: 1;
+  min-width: 0;
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: var(--font-geist-mono, monospace);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-low);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qlc-id-input:focus {
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 1px var(--accent-ring);
+}
+
+.qlc-id-btn-ally {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid rgba(91, 115, 240, 0.35);
+  background: rgba(91, 115, 240, 0.12);
+  color: hsl(230, 80%, 78%);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.qlc-id-btn-ally:hover:not(:disabled) {
+  background: rgba(91, 115, 240, 0.22);
+}
+
+.qlc-id-btn-ally:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qlc-id-btn-enemy {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid rgba(239, 68, 68, 0.30);
+  background: rgba(239, 68, 68, 0.10);
+  color: hsl(0, 70%, 72%);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.qlc-id-btn-enemy:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.18);
+}
+
+.qlc-id-btn-enemy:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── ドラッグオーバーレイ ── */
+.qlc-dnd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: hsla(230, 60%, 10%, 0.72);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.qlc-dnd-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 56px;
+  border-radius: 16px;
+  border: 1.5px dashed var(--accent-ring);
+  background: hsla(230, 50%, 14%, 0.60);
+  box-shadow: 0 0 48px 0 var(--accent-glow);
+}
+
+.qlc-dnd-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.qlc-dnd-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ── 空状態 / スケルトン ── */
+.qlc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: var(--text-muted);
+}
+
+.qlc-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border-low);
+  background: var(--bg-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.qlc-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.qlc-empty-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* スケルトンローダー */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.qlc-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-panel) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-panel) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+/* スケルトンカード (カードと同じアスペクト比) */
+.qlc-skeleton-card {
+  aspect-ratio: 63 / 88;
+  border-radius: 9px;
+  width: 100%;
+}
+
+.qlc-skeleton-hero {
+  border-radius: 9px;
+  height: 100%;
+  width: 100%;
+  min-height: 200px;
+}
+
+/* ── フェードインスライドアップ ── */
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.qlc-fade-in {
+  animation: fade-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── ローディングスピナー ── */
+@keyframes qlc-spin {
+  to { transform: rotate(360deg); }
+}
+
+.qlc-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border-low);
+  border-top-color: var(--accent);
+  animation: qlc-spin 0.75s linear infinite;
+}
+
+/* ── ヘッダー ── */
+.qlc-header-title {
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.qlc-header-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.qlc-header-sub--active {
+  color: var(--accent);
+}
+
+.qlc-header-sub--message {
+  color: var(--text-secondary);
+}
+
+/* ── Toggle expand button ── */
+.qlc-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.qlc-toggle-btn:hover {
+  color: var(--text-secondary);
+}

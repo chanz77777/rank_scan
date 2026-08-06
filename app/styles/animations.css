@@ -17,6 +17,20 @@
   }
 }
 
+.animate-rainbow-border,
+.card-champion-border {
+  background: linear-gradient(115deg, #ff7773, #ffed5f, #a8ff5f, #83fff7, #7894ff, #d875ff, #ff7773) !important;
+  background-size: 300% 300% !important;
+  animation: rainbow-border-flow 5s ease infinite !important;
+}
+
+.animate-rainbow-border.animate-float,
+.card-champion-border.animate-float {
+  animation: float-card 4s ease-in-out infinite, rainbow-border-flow 5s ease infinite !important;
+}
+
+
+
 /** Diamond: 紫〜シアンのグロー点滅 */
 @keyframes glow-pulse-diamond {
   0%, 100% {

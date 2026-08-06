@@ -4,6 +4,7 @@
  */
 
 @import "./styles/base.css";
+@import "./styles/design-system.css";
 @import "./styles/animations.css";
 @import "./styles/card-3d.css";
 @import "./styles/holograms.css";

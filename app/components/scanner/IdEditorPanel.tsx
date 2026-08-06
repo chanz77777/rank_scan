@@ -24,30 +24,28 @@ export default function IdEditorPanel({
   if (extractedPlayerIds.length === 0) return null;
 
   return (
-    <div className="max-w-7xl mx-auto mb-6">
+    <div className="max-w-7xl mx-auto mb-4">
       <button
         type="button"
+        id="id-editor-toggle"
         onClick={() => setShowIdEditor((prev) => !prev)}
-        className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+        className="qlc-toggle-btn"
       >
-        <span>{showIdEditor ? '▼' : '▶'}</span>
+        <span style={{ fontSize: 10 }}>{showIdEditor ? '▼' : '▶'}</span>
         プレイヤーIDを手動修正
       </button>
 
       {showIdEditor && (
-        <div className="mt-3 bg-slate-800/60 border border-slate-700 rounded-lg p-4">
+        <div className="mt-3 qlc-id-editor-panel">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {editableIds.map((id, idx) => {
               const isAlly = idx < 5;
               return (
                 <div
                   key={idx}
-                  className={[
-                    'flex flex-col gap-1.5 rounded-lg p-2 border',
-                    isAlly ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30',
-                  ].join(' ')}
+                  className={`qlc-id-cell ${isAlly ? 'qlc-id-cell-ally' : 'qlc-id-cell-enemy'}`}
                 >
-                  <span className={`text-xs font-semibold ${isAlly ? 'text-blue-300' : 'text-red-300'}`}>
+                  <span className={isAlly ? 'qlc-id-cell-label-ally' : 'qlc-id-cell-label-enemy'}>
                     {idx < 5 ? `味方${idx + 1}` : `敵${idx - 4}`}
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -58,23 +56,17 @@ export default function IdEditorPanel({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleReSearchSingle(idx);
                       }}
-                      className={[
-                        'flex-1 min-w-0 rounded px-2 py-1 text-xs text-white font-mono outline-none border',
-                        isAlly
-                          ? 'bg-blue-950/40 border-blue-500/40 focus:border-blue-400'
-                          : 'bg-red-950/40 border-red-500/40 focus:border-red-400',
-                      ].join(' ')}
+                      className="qlc-id-input"
+                      id={`player-id-input-${idx}`}
                     />
                     <button
                       type="button"
+                      id={`re-search-btn-${idx}`}
                       onClick={() => handleReSearchSingle(idx)}
                       disabled={reSearchingIndex === idx}
-                      className={[
-                        'shrink-0 px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded transition-colors',
-                        isAlly ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700',
-                      ].join(' ')}
+                      className={isAlly ? 'qlc-id-btn-ally' : 'qlc-id-btn-enemy'}
                     >
-                      {reSearchingIndex === idx ? '...' : '🔍'}
+                      {reSearchingIndex === idx ? '…' : '→'}
                     </button>
                   </div>
                 </div>

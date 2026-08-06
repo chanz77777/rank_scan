@@ -200,7 +200,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
     case 'champion':
       return {
         tier,
-        wrapperClassName: 'animate-float',
+        wrapperClassName: 'animate-float animate-rainbow-border p-[2px] rounded-[11px]',
         wrapperStyle: {},
         cardClassName: 'animate-bg-flow',
         cardStyle: {
@@ -211,6 +211,7 @@ export function getCardDecoration(tier: StrengthTier): CardDecoration {
         tierLabel: 'チャンピオン',
         tierEmoji: '👑',
       };
+
 
     case 'diamond':
       return {

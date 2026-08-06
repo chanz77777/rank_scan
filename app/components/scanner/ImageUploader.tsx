@@ -27,33 +27,35 @@ export default function ImageUploader({
   handleFileSelect,
 }: ImageUploaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
       {/* Gemini API Key 入力欄 */}
-      <div className="relative flex items-center bg-slate-800/85 border border-slate-700 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition-all duration-200 shadow-inner w-full sm:w-fit">
-        <span className="text-xs text-slate-400 mr-2 font-semibold select-none whitespace-nowrap">Gemini API:</span>
+      <div className="qlc-input-wrap w-full sm:w-fit">
+        <span className="qlc-input-label">Gemini API</span>
         <input
           type={showApiKey ? 'text' : 'password'}
-          placeholder="APIキーを入力..."
+          placeholder="APIキーを入力"
           value={geminiApiKey}
           onChange={(e) => {
             const val = e.target.value;
             setGeminiApiKey(val);
             localStorage.setItem('gemini_api_key', val);
           }}
-          className="bg-transparent border-none text-white text-xs outline-none w-full min-w-0 sm:w-32 focus:ring-0 placeholder-slate-600 font-mono"
+          className="qlc-input sm:w-32"
+          id="gemini-api-key-input"
         />
         <button
           type="button"
+          id="toggle-api-key-visibility"
           onClick={() => setShowApiKey(!showApiKey)}
-          className="text-slate-500 hover:text-slate-300 ml-1.5 focus:outline-none text-xs shrink-0"
+          className="qlc-eye-btn"
           title={showApiKey ? '非表示' : '表示'}
         >
-          {showApiKey ? '🙈' : '👁️'}
+          {showApiKey ? '●' : '○'}
         </button>
       </div>
 
       {/* ファイル選択ボタン + 切り抜きトグル */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <label className="relative cursor-pointer shrink-0">
           <input
             type="file"
@@ -62,19 +64,26 @@ export default function ImageUploader({
             className="hidden"
             id="file-input"
           />
-          <span className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg text-sm flex items-center gap-2 cursor-pointer whitespace-nowrap">
-            📂 ファイルを選択
+          <span className="qlc-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            ファイルを選択
           </span>
         </label>
-        <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-400 hover:text-slate-200 transition-colors whitespace-nowrap shrink-0">
+
+        <label className="qlc-check-label">
           <input
             type="checkbox"
             checked={autoCrop}
             onChange={(e) => setAutoCrop(e.target.checked)}
-            className="w-4 h-4 rounded"
+            id="auto-crop-toggle"
           />
           自動切り抜き
         </label>
+
         <PlatformToggle value={platform} onChange={setPlatform} />
       </div>
     </div>

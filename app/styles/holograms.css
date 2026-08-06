@@ -19,10 +19,10 @@
 }
 
 .group:hover .card-highlight {
-  animation: none;
   opacity: 0.95;
   background-position: calc(var(--posx, 50%) * 1.5) calc(var(--posy, 50%) * 1.5);
 }
+
 
 /* ─── チャンピオン用 ホログラム（ベース）層 ─── */
 .card-hologram {
@@ -63,7 +63,6 @@
 }
 
 .group:hover .card-hologram {
-  animation: none;
   opacity: 0.95;
   background-repeat: no-repeat;
   background-image:
@@ -139,7 +138,6 @@
 }
 
 .group:hover .card-hologram::after {
-  animation: none;
   background-repeat: no-repeat;
   background-image:
     url("https://drive.google.com/uc?export=view&id=1Z-ZJ-TLDiyZtPLoL3va3gw5xuy-xupfC"),
@@ -176,10 +174,10 @@
 
 .group:hover .card-highlight-diamond {
   opacity: 1;
-  animation: none;
   background-position: center;
   background-size: 100% 100%;
 }
+
 
 /* ─── ダイヤモンド用 ホログラム層 ─── */
 .card-hologram-diamond {
