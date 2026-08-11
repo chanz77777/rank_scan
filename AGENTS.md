@@ -4,5 +4,5 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-作業開始時に git rev-parse HEAD と PROJECT_CONTEXT.md のメタ情報を
-比較し、同期が古い場合は更新を優先すること
+<!-- PROJECT_CONTEXT を常に自動読み込みする指示 -->
+CRITICAL: Before performing any task or generating code, you MUST fully read and internalize the contents of `PROJECT_CONTEXT.md`. Treat `PROJECT_CONTEXT.md` as the single source of truth for project architecture, design rules (Quiet Luxury Console), and specifications.
