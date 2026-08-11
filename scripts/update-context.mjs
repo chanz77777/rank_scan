@@ -8,7 +8,7 @@ const CONTEXT_PATH = path.resolve('PROJECT_CONTEXT.md');
 /**
  * Git コマンドを安全に実行するヘルパー
  */
-function runGitCommand(command: string): string | null {
+function runGitCommand(command) {
     try {
         return execSync(command, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
     } catch {
@@ -19,7 +19,7 @@ function runGitCommand(command: string): string | null {
 /**
  * PROJECT_CONTEXT.md の同期コミットハッシュのみを置換更新する
  */
-function updateSyncedCommitOnly(content: string, currentCommit: string) {
+function updateSyncedCommitOnly(content, currentCommit) {
     const updated = content.replace(
         /<!-- last_synced_commit:\s*([a-f0-9]+|none)\s*-->/,
         `<!-- last_synced_commit: ${currentCommit} -->`
